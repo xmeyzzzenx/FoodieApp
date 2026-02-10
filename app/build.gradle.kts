@@ -2,18 +2,24 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.0.21-1.0.27"
-    id("com.google.dagger.hilt.android") version "2.48"
+
+    // Room necesita un "compiler" para generar código.
+    id("kotlin-kapt")
 }
 
 android {
     namespace = "com.ximena.foodieapp"
-    compileSdk = 35  // Cambié esto, el formato anterior estaba mal
+
+    // Esto lo tenía ya así, lo dejo igual
+    compileSdk {
+        version = release(36)
+    }
 
     defaultConfig {
         applicationId = "com.ximena.foodieapp"
         minSdk = 24
-        targetSdk = 35  // Cambié a 35 para que coincida
+        targetSdk = 36
+
         versionCode = 1
         versionName = "1.0"
 
@@ -22,77 +28,102 @@ android {
 
     buildTypes {
         release {
+            // Para el proyecto no hace falta minificar ni ofuscar
             isMinifyEnabled = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
+    // Java 11 (es el que venía por defecto en mi proyecto)
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    // Compose obligatorio (sin XML)
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
-    // Core Android
+    // -------------------------
+    // DEPENDENCIAS BASE (ya venían)
+    // -------------------------
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Compose BOM
+    // Compose BOM: gestiona versiones automáticamente (mejor que poner números a mano)
     implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // Compose Navigation
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // -------------------------
+    // NAVIGATION COMPOSE (obligatorio)
+    // -------------------------
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
-    // ViewModel Compose
+    // -------------------------
+    // VIEWMODEL + STATE (obligatorio para MVVM)
+    // -------------------------
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
-    // Room
+    // -------------------------
+    // COROUTINES (para cosas asíncronas: Room y Retrofit)
+    // -------------------------
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // -------------------------
+    // ROOM (base de datos local) - obligatorio
+    // Usamos KAPT para el compiler (en vez de KSP)
+    // -------------------------
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
 
-    // Retrofit
+    // -------------------------
+    // RETROFIT (API REST) - obligatorio
+    // -------------------------
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // OkHttp (para logs y peticiones)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Auth0
+    // -------------------------
+    // AUTH0 (login) - obligatorio
+    // -------------------------
     implementation("com.auth0.android:auth0:2.10.2")
 
-    // Hilt (Dependency Injection)
-    implementation("com.google.dagger:hilt-android:2.48")
-    ksp("com.google.dagger:hilt-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-
-    // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-    // Coil (Para cargar imágenes)
+    // -------------------------
+    // COIL (cargar imágenes en Compose)
+    // -------------------------
     implementation("io.coil-kt:coil-compose:2.5.0")
 
-    // Testing
+    // -------------------------
+    // TESTS (ya venían)
+    // -------------------------
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
