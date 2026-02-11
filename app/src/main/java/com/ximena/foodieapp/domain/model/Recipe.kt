@@ -1,11 +1,12 @@
 package com.ximena.foodieapp.domain.model
 
+// Modelo interno de receta que usa la app
 data class Recipe(
-    val id: Int,                        // Identificador único de la receta
-    val titulo: String,                 // Nombre de la receta
-    val imagen: String,                 // URL de la foto
-    val minutosPreparacion: Int,        // Tiempo de preparación en minutos
-    val porciones: Int,                 // Número de porciones
-    val descripcion: String,            // Descripción breve
-    val esFavorita: Boolean = false     // Si está guardada como favorita (por defecto no)
+    val id: Int,
+    val titulo: String,
+    val imagen: String,
+    val minutosPreparacion: Int,
+    val porciones: Int,
+    val descripcion: String,
+    val esFavorita: Boolean = false
 )
