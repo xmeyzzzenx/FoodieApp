@@ -1,8 +1,7 @@
 package com.ximena.foodieapp.data.remote.dto
 
-// La API devuelve las recetas dentro de un objeto "results"
-// Este DTO representa ese objeto contenedor
+// Contenedor que devuelve la API con la lista de recetas
 data class RecipeListDto(
-    val results: List<RecipeDto>,
-    val totalResults: Int
+    val results: List<RecipeDto>, // Lista de recetas
+    val totalResults: Int         // Total de recetas disponibles
 )
