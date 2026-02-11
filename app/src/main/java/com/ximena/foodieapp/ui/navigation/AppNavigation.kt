@@ -24,7 +24,7 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Rutas.LOGIN // Empieza en el login
+        startDestination = Rutas.LOGIN
     ) {
 
         // Pantalla de login
@@ -46,14 +46,13 @@ fun AppNavigation() {
             )
         }
 
-        // Pantalla de detalle — recibe el id de la receta
+        // Pantalla de detalle
         composable(Rutas.DETALLE) { backStackEntry ->
             val recetaId = backStackEntry.arguments?.getString("recetaId")?.toInt()
             DetailScreen(
                 recipe = null,
                 onFavoriteClick = {},
                 onBack = { navController.popBackStack() }
-                // volver a la pantalla anterior
             )
         }
 
