@@ -1,6 +1,6 @@
 package com.ximena.foodieapp.domain.model
 
-// Modelo interno de un registro del plan semanal
+// Modelo de un registro del plan semanal
 data class MealPlan(
     val id: Int,
     val diaSemana: String,

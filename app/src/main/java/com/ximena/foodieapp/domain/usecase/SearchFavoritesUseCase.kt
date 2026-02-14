@@ -4,11 +4,11 @@ import com.ximena.foodieapp.data.repository.RecipeRepository
 import com.ximena.foodieapp.domain.model.Recipe
 import kotlinx.coroutines.flow.Flow
 
-// Obtener recetas favoritas guardadas
-class GetFavoritesUseCase(
+// Buscar en favoritas por título
+class SearchFavoritesUseCase(
     private val repository: RecipeRepository
 ) {
-    operator fun invoke(): Flow<List<Recipe>> {
-        return repository.obtenerFavoritas()
+    operator fun invoke(busqueda: String): Flow<List<Recipe>> {
+        return repository.buscarEnFavoritas(busqueda)
     }
 }

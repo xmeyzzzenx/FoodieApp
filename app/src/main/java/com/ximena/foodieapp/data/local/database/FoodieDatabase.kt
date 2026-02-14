@@ -7,7 +7,7 @@ import com.ximena.foodieapp.data.local.dao.RecipeDao
 import com.ximena.foodieapp.data.local.entity.MealPlanEntity
 import com.ximena.foodieapp.data.local.entity.RecipeEntity
 
-// Base de datos principal de la app
+// Configuración de la base de datos local
 @Database(
     entities = [RecipeEntity::class, MealPlanEntity::class],
     version = 1

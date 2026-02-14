@@ -2,9 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // Añadimos Hilt y KSP
-    id("com.google.dagger.hilt.android")
-    id("com.google.devtools.ksp")
+    // KSP para Room
+    id("com.google.devtools.ksp") version "2.0.21-1.0.27"
 }
 
 android {
@@ -68,7 +67,7 @@ dependencies {
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")  // ← DESCOMENTADO
 
     // ── RETROFIT (llamadas a la API) ──────────────────────────────────────
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
@@ -80,15 +79,18 @@ dependencies {
     // implementation("com.auth0.android:auth0:2.10.2")  // Comentado por ahora
 
     // ── HILT (inyección de dependencias) ──────────────────────────────────
-    implementation("com.google.dagger:hilt-android:2.48")
-    ksp("com.google.dagger:hilt-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    // implementation("com.google.dagger:hilt-android:2.48")
+    // ksp("com.google.dagger:hilt-compiler:2.48")
+    // implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
 
     // ── COROUTINES ────────────────────────────────────────────────────────
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // ── COIL (cargar imágenes) ────────────────────────────────────────────
     implementation("io.coil-kt:coil-compose:2.5.0")
+
+    // ── GSON (para navegación con objetos) ────────────────────────────────
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // ── TEST y DEBUG ──────────────────────────────────────────────────────
     testImplementation("junit:junit:4.13.2")

@@ -3,7 +3,7 @@ package com.ximena.foodieapp.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-// Tabla "recetas" en la base de datos local
+// Tabla de recetas en la base de datos
 @Entity(tableName = "recetas")
 data class RecipeEntity(
     @PrimaryKey
