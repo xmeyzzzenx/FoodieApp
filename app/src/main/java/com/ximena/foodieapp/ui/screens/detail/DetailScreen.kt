@@ -15,13 +15,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ximena.foodieapp.di.AppDependencies
-import com.ximena.foodieapp.domain.model.Recipe
-import com.ximena.foodieapp.ui.screens.detail.DetailViewModel
+import com.ximena.foodieapp.ui.components.LoadingIndicator
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    receta: Recipe,
+    recetaId: Int,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -29,13 +28,14 @@ fun DetailScreen(
     // Crear ViewModel
     val viewModel = remember {
         DetailViewModel(
+            obtenerRecetaPorId = AppDependencies.provideGetRecipeByIdUseCase(context),
             guardarFavorita = AppDependencies.provideSaveFavoriteUseCase(context),
-            recetaInicial = receta
+            recetaId = recetaId
         )
     }
 
     // Observar el estado
-    val recetaActual by viewModel.receta.collectAsState()
+    val receta by viewModel.receta.collectAsState()
 
     Scaffold(
         topBar = {
@@ -47,79 +47,87 @@ fun DetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.toggleFavorita() }) {
-                        Icon(
-                            imageVector = if (recetaActual.esFavorita) {
-                                Icons.Default.Favorite
-                            } else {
-                                Icons.Default.FavoriteBorder
-                            },
-                            contentDescription = "Favorita",
-                            tint = if (recetaActual.esFavorita) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            }
-                        )
+                    if (receta != null) {
+                        IconButton(onClick = { viewModel.toggleFavorita() }) {
+                            Icon(
+                                imageVector = if (receta?.esFavorita == true) {
+                                    Icons.Default.Favorite
+                                } else {
+                                    Icons.Default.FavoriteBorder
+                                },
+                                contentDescription = "Favorita",
+                                tint = if (receta?.esFavorita == true) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                }
+                            )
+                        }
                     }
                 }
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Imagen de la receta
-            AsyncImage(
-                model = recetaActual.imagen,
-                contentDescription = recetaActual.titulo,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp),
-                contentScale = ContentScale.Crop
-            )
+        if (receta == null) {
+            LoadingIndicator()
+        } else {
+            val recetaActual = receta!!
 
-            // Contenido
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
             ) {
-                // Título
-                Text(
-                    text = recetaActual.titulo,
-                    style = MaterialTheme.typography.headlineMedium
+                // Imagen de la receta
+                AsyncImage(
+                    model = recetaActual.imagen,
+                    contentDescription = recetaActual.titulo,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(250.dp),
+                    contentScale = ContentScale.Crop
                 )
 
-                // Información básica
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                // Contenido
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    InfoChip(
-                        label = "Tiempo",
-                        value = "${recetaActual.minutosPreparacion} min"
+                    // Título
+                    Text(
+                        text = recetaActual.titulo,
+                        style = MaterialTheme.typography.headlineMedium
                     )
 
-                    InfoChip(
-                        label = "Porciones",
-                        value = "${recetaActual.porciones}"
+                    // Información básica
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        InfoChip(
+                            label = "Tiempo",
+                            value = "${recetaActual.minutosPreparacion} min"
+                        )
+
+                        InfoChip(
+                            label = "Porciones",
+                            value = "${recetaActual.porciones}"
+                        )
+                    }
+
+                    // Descripción
+                    Text(
+                        text = "Descripción",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                    Text(
+                        text = recetaActual.descripcion
+                            .replace(Regex("<[^>]*>"), ""),
+                        style = MaterialTheme.typography.bodyLarge
                     )
                 }
-
-                // Descripción
-                Text(
-                    text = "Descripción",
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                Text(
-                    text = recetaActual.descripcion
-                        .replace(Regex("<[^>]*>"), ""),  // Quita HTML tags
-                    style = MaterialTheme.typography.bodyLarge
-                )
             }
         }
     }

@@ -6,21 +6,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ximena.foodieapp.domain.model.Recipe
 import com.ximena.foodieapp.ui.screens.detail.DetailScreen
 import com.ximena.foodieapp.ui.screens.favorites.FavoritesScreen
 import com.ximena.foodieapp.ui.screens.form.FormScreen
 import com.ximena.foodieapp.ui.screens.home.HomeScreen
 import com.ximena.foodieapp.ui.screens.login.LoginScreen
-import com.google.gson.Gson
-import java.net.URLEncoder
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val gson = Gson()
 
     NavHost(
         navController = navController,
@@ -40,11 +34,8 @@ fun AppNavigation() {
         // Home
         composable("home") {
             HomeScreen(
-                onNavigateToDetail = { receta ->
-                    val recetaJson = gson.toJson(receta)
-                    // CODIFICAR URL para evitar caracteres especiales
-                    val recetaEncoded = URLEncoder.encode(recetaJson, StandardCharsets.UTF_8.toString())
-                    navController.navigate("detail/$recetaEncoded")
+                onNavigateToDetail = { recetaId ->
+                    navController.navigate("detail/$recetaId")
                 },
                 onNavigateToFavorites = {
                     navController.navigate("favorites")
@@ -55,11 +46,8 @@ fun AppNavigation() {
         // Favoritas
         composable("favorites") {
             FavoritesScreen(
-                onNavigateToDetail = { receta ->
-                    val recetaJson = gson.toJson(receta)
-                    // CODIFICAR URL
-                    val recetaEncoded = URLEncoder.encode(recetaJson, StandardCharsets.UTF_8.toString())
-                    navController.navigate("detail/$recetaEncoded")
+                onNavigateToDetail = { recetaId ->
+                    navController.navigate("detail/$recetaId")
                 },
                 onNavigateBack = {
                     navController.popBackStack()
@@ -69,16 +57,13 @@ fun AppNavigation() {
 
         // Detalle
         composable(
-            route = "detail/{recetaJson}",
-            arguments = listOf(navArgument("recetaJson") { type = NavType.StringType })
+            route = "detail/{recetaId}",
+            arguments = listOf(navArgument("recetaId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val recetaEncoded = backStackEntry.arguments?.getString("recetaJson")
-            // DECODIFICAR URL
-            val recetaJson = URLDecoder.decode(recetaEncoded, StandardCharsets.UTF_8.toString())
-            val receta = gson.fromJson(recetaJson, Recipe::class.java)
+            val recetaId = backStackEntry.arguments?.getInt("recetaId") ?: 0
 
             DetailScreen(
-                receta = receta,
+                recetaId = recetaId,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
@@ -86,7 +71,7 @@ fun AppNavigation() {
         }
 
         // Formulario
-        composable("form") {
+        composable(route = "form") {
             FormScreen(
                 onNavigateBack = {
                     navController.popBackStack()

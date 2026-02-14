@@ -13,15 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.ximena.foodieapp.di.AppDependencies
-import com.ximena.foodieapp.domain.model.Recipe
 import com.ximena.foodieapp.ui.components.LoadingIndicator
 import com.ximena.foodieapp.ui.components.RecipeCard
-import com.ximena.foodieapp.ui.screens.home.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onNavigateToDetail: (Recipe) -> Unit,
+    onNavigateToDetail: (Int) -> Unit,
     onNavigateToFavorites: () -> Unit
 ) {
     val context = LocalContext.current
@@ -31,6 +29,7 @@ fun HomeScreen(
         HomeViewModel(
             obtenerRecetas = AppDependencies.provideGetRecipesUseCase(context),
             guardarFavorita = AppDependencies.provideSaveFavoriteUseCase(context),
+            repository = AppDependencies.provideRecipeRepository(context),
             apiKey = AppDependencies.getApiKey()
         )
     }
@@ -100,7 +99,10 @@ fun HomeScreen(
                         items(estadoActual.recetas) { receta ->
                             RecipeCard(
                                 recipe = receta,
-                                onClick = { onNavigateToDetail(receta) },
+                                onClick = {
+                                    viewModel.guardarRecetaTemporal(receta)
+                                    onNavigateToDetail(receta.id)
+                                },
                                 onFavoriteClick = { viewModel.toggleFavorita(receta) }
                             )
                         }

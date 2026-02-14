@@ -13,15 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.ximena.foodieapp.di.AppDependencies
-import com.ximena.foodieapp.domain.model.Recipe
 import com.ximena.foodieapp.ui.components.LoadingIndicator
 import com.ximena.foodieapp.ui.components.RecipeCard
-import com.ximena.foodieapp.ui.screens.favorites.FavoritesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
-    onNavigateToDetail: (Recipe) -> Unit,
+    onNavigateToDetail: (Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -95,7 +93,7 @@ fun FavoritesScreen(
                         items(estadoActual.recetas) { receta ->
                             RecipeCard(
                                 recipe = receta,
-                                onClick = { onNavigateToDetail(receta) },
+                                onClick = { onNavigateToDetail(receta.id) },
                                 onFavoriteClick = { viewModel.eliminarFavorita(receta) }
                             )
                         }

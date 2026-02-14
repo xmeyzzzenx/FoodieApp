@@ -7,6 +7,7 @@ import com.ximena.foodieapp.data.local.database.FoodieDatabase
 import com.ximena.foodieapp.data.remote.api.SpoonacularApi
 import com.ximena.foodieapp.data.repository.RecipeRepository
 import com.ximena.foodieapp.domain.usecase.GetFavoritesUseCase
+import com.ximena.foodieapp.domain.usecase.GetRecipeByIdUseCase
 import com.ximena.foodieapp.domain.usecase.GetRecipesUseCase
 import com.ximena.foodieapp.domain.usecase.SaveFavoriteUseCase
 import com.ximena.foodieapp.domain.usecase.SearchFavoritesUseCase
@@ -105,6 +106,12 @@ object AppDependencies {
 
     fun provideSearchFavoritesUseCase(context: Context): SearchFavoritesUseCase {
         return SearchFavoritesUseCase(
+            repository = provideRecipeRepository(context)
+        )
+    }
+
+    fun provideGetRecipeByIdUseCase(context: Context): GetRecipeByIdUseCase {
+        return GetRecipeByIdUseCase(
             repository = provideRecipeRepository(context)
         )
     }

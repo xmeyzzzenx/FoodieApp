@@ -104,4 +104,35 @@ class RecipeRepository(
             }
         }
     }
+
+    // Guardar receta temporal para DetailScreen
+    suspend fun guardarRecetaTemporal(recipe: Recipe) {
+        val entity = RecipeEntity(
+            id = recipe.id,
+            titulo = recipe.titulo,
+            imagen = recipe.imagen,
+            minutosPreparacion = recipe.minutosPreparacion,
+            porciones = recipe.porciones,
+            descripcion = recipe.descripcion,
+            esFavorita = recipe.esFavorita
+        )
+        dao.insertar(entity)
+    }
+
+    // Obtener receta por ID
+    fun obtenerPorId(recetaId: Int): Flow<Recipe?> {
+        return dao.obtenerPorId(recetaId).map { entity ->
+            entity?.let {
+                Recipe(
+                    id = it.id,
+                    titulo = it.titulo,
+                    imagen = it.imagen,
+                    minutosPreparacion = it.minutosPreparacion,
+                    porciones = it.porciones,
+                    descripcion = it.descripcion,
+                    esFavorita = it.esFavorita
+                )
+            }
+        }
+    }
 }

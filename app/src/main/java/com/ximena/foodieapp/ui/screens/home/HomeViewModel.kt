@@ -2,6 +2,7 @@ package com.ximena.foodieapp.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ximena.foodieapp.data.repository.RecipeRepository
 import com.ximena.foodieapp.domain.model.Recipe
 import com.ximena.foodieapp.domain.usecase.GetRecipesUseCase
 import com.ximena.foodieapp.domain.usecase.SaveFavoriteUseCase
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     private val obtenerRecetas: GetRecipesUseCase,
     private val guardarFavorita: SaveFavoriteUseCase,
+    private val repository: RecipeRepository,
     private val apiKey: String
 ) : ViewModel() {
 
@@ -77,6 +79,17 @@ class HomeViewModel(
             } catch (e: Exception) {
                 // Mostrar error pero no cambiar el estado principal
                 println("Error al guardar favorita: ${e.message}")
+            }
+        }
+    }
+
+    // Guardar receta temporal para DetailScreen
+    fun guardarRecetaTemporal(receta: Recipe) {
+        viewModelScope.launch {
+            try {
+                repository.guardarRecetaTemporal(receta)
+            } catch (e: Exception) {
+                println("Error al guardar temporal: ${e.message}")
             }
         }
     }

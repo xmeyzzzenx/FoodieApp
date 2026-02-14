@@ -4,29 +4,34 @@ import androidx.room.*
 import com.ximena.foodieapp.data.local.entity.RecipeEntity
 import kotlinx.coroutines.flow.Flow
 
-// Consultas a la tabla de recetas
 @Dao
 interface RecipeDao {
 
-    // CREATE
+    // Insertar o actualizar receta
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertar(receta: RecipeEntity)
 
-    // READ
+    // Obtener todas las recetas
     @Query("SELECT * FROM recetas")
     fun obtenerTodas(): Flow<List<RecipeEntity>>
 
+    // Obtener solo favoritas
     @Query("SELECT * FROM recetas WHERE esFavorita = 1")
     fun obtenerFavoritas(): Flow<List<RecipeEntity>>
 
+    // Buscar recetas por título
     @Query("SELECT * FROM recetas WHERE titulo LIKE '%' || :busqueda || '%'")
     fun buscarPorTitulo(busqueda: String): Flow<List<RecipeEntity>>
 
-    // UPDATE
+    // Actualizar receta
     @Update
     suspend fun actualizar(receta: RecipeEntity)
 
-    // DELETE
+    // Eliminar receta
     @Delete
     suspend fun eliminar(receta: RecipeEntity)
+
+    // Obtener receta por ID (sin importar si es favorita)
+    @Query("SELECT * FROM recetas WHERE id = :recetaId LIMIT 1")
+    fun obtenerPorId(recetaId: Int): Flow<RecipeEntity?>
 }
