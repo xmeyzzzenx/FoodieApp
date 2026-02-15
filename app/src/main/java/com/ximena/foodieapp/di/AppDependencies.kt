@@ -2,31 +2,31 @@ package com.ximena.foodieapp.di
 
 import android.content.Context
 import androidx.room.Room
-import com.google.gson.GsonBuilder
+import com.ximena.foodieapp.BuildConfig
 import com.ximena.foodieapp.data.local.database.FoodieDatabase
 import com.ximena.foodieapp.data.remote.api.SpoonacularApi
+import com.ximena.foodieapp.data.repository.MealPlanRepository
 import com.ximena.foodieapp.data.repository.RecipeRepository
-import com.ximena.foodieapp.domain.usecase.GetFavoritesUseCase
-import com.ximena.foodieapp.domain.usecase.GetRecipeByIdUseCase
-import com.ximena.foodieapp.domain.usecase.GetRecipesUseCase
-import com.ximena.foodieapp.domain.usecase.SaveFavoriteUseCase
-import com.ximena.foodieapp.domain.usecase.SearchFavoritesUseCase
+import com.ximena.foodieapp.domain.usecase.mealplan.AddMealPlanUseCase
+import com.ximena.foodieapp.domain.usecase.mealplan.DeleteMealPlanUseCase
+import com.ximena.foodieapp.domain.usecase.mealplan.GetMealPlansUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.GetFavoritesUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.GetRecipeByIdUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.GetRecipesUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.SearchFavoritesUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.ToggleFavoriteUseCase
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-// Proveedor de dependencias de la aplicación
+// Proveedor de dependencias (DI manual)
 object AppDependencies {
 
-    private const val API_KEY = "f59b6ebb43e24fc291595844ef8ec38c"
     private const val BASE_URL = "https://api.spoonacular.com/"
 
-    // ═══════════════════════════════════════════════════════════
-    // ROOM DATABASE
-    // ═══════════════════════════════════════════════════════════
-
+    // Instancia única de Room
     private var database: FoodieDatabase? = null
 
     fun provideDatabase(context: Context): FoodieDatabase {
@@ -36,45 +36,45 @@ object AppDependencies {
                 FoodieDatabase::class.java,
                 "foodie_database"
             )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration() // Reinicia BD si cambia
                 .build()
                 .also { database = it }
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // RETROFIT API
-    // ═══════════════════════════════════════════════════════════
+    // OkHttp
+    private fun provideOkHttpClient(): OkHttpClient {
+        val logging = HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY // Logs en debug
+            } else {
+                HttpLoggingInterceptor.Level.NONE // Sin logs en release
+            }
+        }
 
-    private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        return OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
     }
 
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(loggingInterceptor)
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
-        .build()
+    // Retrofit
+    private fun provideRetrofit(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(provideOkHttpClient())
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
 
-    private val gson = GsonBuilder()
-        .setLenient()
-        .create()
-
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create(gson))
-        .build()
-
+    // API
     fun provideSpoonacularApi(): SpoonacularApi {
-        return retrofit.create(SpoonacularApi::class.java)
+        return provideRetrofit().create(SpoonacularApi::class.java)
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // REPOSITORY
-    // ═══════════════════════════════════════════════════════════
-
+    // Repositories
     fun provideRecipeRepository(context: Context): RecipeRepository {
         return RecipeRepository(
             api = provideSpoonacularApi(),
@@ -82,43 +82,38 @@ object AppDependencies {
         )
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // USE CASES
-    // ═══════════════════════════════════════════════════════════
-
-    fun provideGetRecipesUseCase(context: Context): GetRecipesUseCase {
-        return GetRecipesUseCase(
-            repository = provideRecipeRepository(context)
+    fun provideMealPlanRepository(context: Context): MealPlanRepository {
+        return MealPlanRepository(
+            dao = provideDatabase(context).mealPlanDao()
         )
     }
 
-    fun provideGetFavoritesUseCase(context: Context): GetFavoritesUseCase {
-        return GetFavoritesUseCase(
-            repository = provideRecipeRepository(context)
-        )
-    }
+    // UseCases (Recipes)
+    fun provideGetRecipesUseCase(context: Context) =
+        GetRecipesUseCase(provideRecipeRepository(context))
 
-    fun provideSaveFavoriteUseCase(context: Context): SaveFavoriteUseCase {
-        return SaveFavoriteUseCase(
-            repository = provideRecipeRepository(context)
-        )
-    }
+    fun provideGetFavoritesUseCase(context: Context) =
+        GetFavoritesUseCase(provideRecipeRepository(context))
 
-    fun provideSearchFavoritesUseCase(context: Context): SearchFavoritesUseCase {
-        return SearchFavoritesUseCase(
-            repository = provideRecipeRepository(context)
-        )
-    }
+    fun provideSearchFavoritesUseCase(context: Context) =
+        SearchFavoritesUseCase(provideRecipeRepository(context))
 
-    fun provideGetRecipeByIdUseCase(context: Context): GetRecipeByIdUseCase {
-        return GetRecipeByIdUseCase(
-            repository = provideRecipeRepository(context)
-        )
-    }
+    fun provideGetRecipeByIdUseCase(context: Context) =
+        GetRecipeByIdUseCase(provideRecipeRepository(context))
 
-    // ═══════════════════════════════════════════════════════════
-    // API KEY
-    // ═══════════════════════════════════════════════════════════
+    fun provideToggleFavoriteUseCase(context: Context) =
+        ToggleFavoriteUseCase(provideRecipeRepository(context))
 
-    fun getApiKey(): String = API_KEY
+    // UseCases (MealPlan)
+    fun provideGetMealPlansUseCase(context: Context) =
+        GetMealPlansUseCase(provideMealPlanRepository(context))
+
+    fun provideAddMealPlanUseCase(context: Context) =
+        AddMealPlanUseCase(provideMealPlanRepository(context))
+
+    fun provideDeleteMealPlanUseCase(context: Context) =
+        DeleteMealPlanUseCase(provideMealPlanRepository(context))
+
+    // API key (BuildConfig)
+    fun getApiKey(): String = BuildConfig.SPOONACULAR_API_KEY
 }

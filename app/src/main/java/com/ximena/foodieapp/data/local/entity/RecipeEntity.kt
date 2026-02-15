@@ -3,15 +3,13 @@ package com.ximena.foodieapp.data.local.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-// Tabla de recetas en la base de datos
-@Entity(tableName = "recetas")
+@Entity(tableName = "recipes")
 data class RecipeEntity(
-    @PrimaryKey
-    val id: Int,
-    val titulo: String,
-    val imagen: String,
-    val minutosPreparacion: Int,
-    val porciones: Int,
-    val descripcion: String,
-    val esFavorita: Boolean = false
+    @PrimaryKey val id: Int,                 // ID de Spoonacular
+    val title: String,                       // Título
+    val imageUrl: String?,                   // URL imagen
+    val readyInMinutes: Int,                 // Minutos
+    val servings: Int,                       // Porciones
+    val summary: String,                     // Descripción
+    val isFavorite: Boolean = false          // Favorita
 )

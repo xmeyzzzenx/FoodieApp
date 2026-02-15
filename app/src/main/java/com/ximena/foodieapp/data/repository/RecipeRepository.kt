@@ -3,136 +3,103 @@ package com.ximena.foodieapp.data.repository
 import com.ximena.foodieapp.data.local.dao.RecipeDao
 import com.ximena.foodieapp.data.local.entity.RecipeEntity
 import com.ximena.foodieapp.data.remote.api.SpoonacularApi
+import com.ximena.foodieapp.data.remote.dto.RecipeDto
 import com.ximena.foodieapp.domain.model.Recipe
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// Intermediario entre la API y la base de datos
+// Repositorio de recetas: conecta API (Spoonacular) + BD local (Room)
 class RecipeRepository(
     private val api: SpoonacularApi,
     private val dao: RecipeDao
 ) {
 
-    // Obtener recetas de la API
-    suspend fun obtenerRecetas(apiKey: String, busqueda: String? = null): List<Recipe> {
-        val response = api.obtenerRecetas(apiKey, busqueda)
-        return response.results.map { dto ->
-            Recipe(
-                id = dto.id,
-                titulo = dto.title,
-                imagen = dto.image,
-                minutosPreparacion = dto.readyInMinutes,
-                porciones = dto.servings,
-                descripcion = dto.summary,
-                esFavorita = false
-            )
+    // ─────────────────────────────────────────────────────────────────────
+    // API (Spoonacular)
+    // ─────────────────────────────────────────────────────────────────────
+
+    // Buscar / listar recetas desde la API
+    suspend fun fetchRecipes(apiKey: String, query: String? = null): List<Recipe> {
+        val response = api.searchRecipes(apiKey = apiKey, query = query)
+        return response.results.map { it.toDomainFromApi() }
+    }
+
+    // Obtener detalle de receta por ID desde la API
+    suspend fun fetchRecipeById(apiKey: String, recipeId: Int): Recipe {
+        return api.getRecipeInformation(id = recipeId, apiKey = apiKey).toDomainFromApi()
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // ROOM (favoritas guardadas)
+    // ─────────────────────────────────────────────────────────────────────
+
+    // Obtener favoritas (Room)
+    fun getFavorites(): Flow<List<Recipe>> =
+        dao.getFavorites().map { entities: List<RecipeEntity> ->
+            entities.map { it.toDomainFromDb() }
         }
-    }
 
-    // Guardar receta como favorita
-    suspend fun guardarFavorita(recipe: Recipe) {
-        val entity = RecipeEntity(
-            id = recipe.id,
-            titulo = recipe.titulo,
-            imagen = recipe.imagen,
-            minutosPreparacion = recipe.minutosPreparacion,
-            porciones = recipe.porciones,
-            descripcion = recipe.descripcion,
-            esFavorita = true
-        )
-        dao.insertar(entity)
-    }
-
-    // Obtener favoritas de Room
-    fun obtenerFavoritas(): Flow<List<Recipe>> {
-        return dao.obtenerFavoritas().map { entities ->
-            entities.map { entity ->
-                Recipe(
-                    id = entity.id,
-                    titulo = entity.titulo,
-                    imagen = entity.imagen,
-                    minutosPreparacion = entity.minutosPreparacion,
-                    porciones = entity.porciones,
-                    descripcion = entity.descripcion,
-                    esFavorita = entity.esFavorita
-                )
-            }
+    // Buscar dentro de favoritas (Room)
+    fun searchFavorites(query: String): Flow<List<Recipe>> =
+        dao.search(query).map { entities: List<RecipeEntity> ->
+            entities.map { it.toDomainFromDb() }
         }
-    }
 
-    // Actualizar receta
-    suspend fun actualizarReceta(recipe: Recipe) {
-        val entity = RecipeEntity(
-            id = recipe.id,
-            titulo = recipe.titulo,
-            imagen = recipe.imagen,
-            minutosPreparacion = recipe.minutosPreparacion,
-            porciones = recipe.porciones,
-            descripcion = recipe.descripcion,
-            esFavorita = recipe.esFavorita
-        )
-        dao.actualizar(entity)
-    }
-
-    // Eliminar receta de favoritas
-    suspend fun eliminarFavorita(recipe: Recipe) {
-        val entity = RecipeEntity(
-            id = recipe.id,
-            titulo = recipe.titulo,
-            imagen = recipe.imagen,
-            minutosPreparacion = recipe.minutosPreparacion,
-            porciones = recipe.porciones,
-            descripcion = recipe.descripcion,
-            esFavorita = false
-        )
-        dao.eliminar(entity)
-    }
-
-    // Buscar en favoritas locales
-    fun buscarEnFavoritas(busqueda: String): Flow<List<Recipe>> {
-        return dao.buscarPorTitulo(busqueda).map { entities ->
-            entities.map { entity ->
-                Recipe(
-                    id = entity.id,
-                    titulo = entity.titulo,
-                    imagen = entity.imagen,
-                    minutosPreparacion = entity.minutosPreparacion,
-                    porciones = entity.porciones,
-                    descripcion = entity.descripcion,
-                    esFavorita = entity.esFavorita
-                )
-            }
+    // Obtener receta guardada por ID (Room)
+    fun getById(recipeId: Int): Flow<Recipe?> =
+        dao.getById(recipeId).map { entity ->
+            entity?.toDomainFromDb()
         }
+
+    // Guardar/actualizar receta en Room (insert con REPLACE)
+    suspend fun save(recipe: Recipe) {
+        dao.insert(recipe.toEntity())
     }
 
-    // Guardar receta temporal para DetailScreen
-    suspend fun guardarRecetaTemporal(recipe: Recipe) {
-        val entity = RecipeEntity(
-            id = recipe.id,
-            titulo = recipe.titulo,
-            imagen = recipe.imagen,
-            minutosPreparacion = recipe.minutosPreparacion,
-            porciones = recipe.porciones,
-            descripcion = recipe.descripcion,
-            esFavorita = recipe.esFavorita
-        )
-        dao.insertar(entity)
+    // Eliminar receta de Room
+    suspend fun delete(recipe: Recipe) {
+        dao.delete(recipe.toEntity())
     }
 
-    // Obtener receta por ID
-    fun obtenerPorId(recetaId: Int): Flow<Recipe?> {
-        return dao.obtenerPorId(recetaId).map { entity ->
-            entity?.let {
-                Recipe(
-                    id = it.id,
-                    titulo = it.titulo,
-                    imagen = it.imagen,
-                    minutosPreparacion = it.minutosPreparacion,
-                    porciones = it.porciones,
-                    descripcion = it.descripcion,
-                    esFavorita = it.esFavorita
-                )
-            }
-        }
+    // Marcar/desmarcar favorita (Room)
+    suspend fun setFavorite(recipe: Recipe, isFavorite: Boolean) {
+        dao.insert(recipe.copy(isFavorite = isFavorite).toEntity())
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // MAPPERS (privados)
+    // ─────────────────────────────────────────────────────────────────────
+
+    // API DTO -> Domain
+    private fun RecipeDto.toDomainFromApi(): Recipe = Recipe(
+        id = id,
+        title = title,
+        imageUrl = image,
+        readyInMinutes = readyInMinutes,
+        servings = servings,
+        summary = summary,
+        isFavorite = false // la API no sabe tus favoritas
+    )
+
+    // DB Entity -> Domain
+    private fun RecipeEntity.toDomainFromDb(): Recipe = Recipe(
+        id = id,
+        title = title,
+        imageUrl = imageUrl,
+        readyInMinutes = readyInMinutes,
+        servings = servings,
+        summary = summary,
+        isFavorite = isFavorite
+    )
+
+    // Domain -> DB Entity
+    private fun Recipe.toEntity(): RecipeEntity = RecipeEntity(
+        id = id,
+        title = title,
+        imageUrl = imageUrl,
+        readyInMinutes = readyInMinutes,
+        servings = servings,
+        summary = summary,
+        isFavorite = isFavorite
+    )
 }

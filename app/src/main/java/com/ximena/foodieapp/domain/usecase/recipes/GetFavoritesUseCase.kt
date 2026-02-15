@@ -1,14 +1,14 @@
-package com.ximena.foodieapp.domain.usecase
+package com.ximena.foodieapp.domain.usecase.recipes
 
 import com.ximena.foodieapp.data.repository.RecipeRepository
 import com.ximena.foodieapp.domain.model.Recipe
 import kotlinx.coroutines.flow.Flow
 
-// Obtener recetas favoritas guardadas
+// Favoritas guardadas en Room
 class GetFavoritesUseCase(
     private val repository: RecipeRepository
 ) {
     operator fun invoke(): Flow<List<Recipe>> {
-        return repository.obtenerFavoritas()
+        return repository.getFavorites()
     }
 }

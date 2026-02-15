@@ -4,29 +4,30 @@ import androidx.room.*
 import com.ximena.foodieapp.data.local.entity.MealPlanEntity
 import kotlinx.coroutines.flow.Flow
 
-// Consultas a la tabla del plan semanal
 @Dao
 interface MealPlanDao {
 
-    // CREATE
+    // Obtener todo el plan
+    @Query("SELECT * FROM meal_plans ORDER BY dayOfWeek ASC")
+    fun getAll(): Flow<List<MealPlanEntity>>
+
+    // Obtener por día
+    @Query("SELECT * FROM meal_plans WHERE dayOfWeek = :day ORDER BY mealType ASC")
+    fun getByDay(day: String): Flow<List<MealPlanEntity>>
+
+    // Insertar o reemplazar
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertar(plan: MealPlanEntity)
+    suspend fun insert(item: MealPlanEntity)
 
-    // READ
-    @Query("SELECT * FROM plan_semanal ORDER BY diaSemana ASC")
-    fun obtenerTodos(): Flow<List<MealPlanEntity>>
-
-    @Query("SELECT * FROM plan_semanal WHERE diaSemana = :dia")
-    fun obtenerPorDia(dia: String): Flow<List<MealPlanEntity>>
-
-    // UPDATE
+    // Actualizar
     @Update
-    suspend fun actualizar(plan: MealPlanEntity)
+    suspend fun update(item: MealPlanEntity)
 
-    // DELETE
+    // Eliminar
     @Delete
-    suspend fun eliminar(plan: MealPlanEntity)
+    suspend fun delete(item: MealPlanEntity)
 
-    @Query("DELETE FROM plan_semanal")
-    suspend fun limpiarTodos()
+    // Borrar todo
+    @Query("DELETE FROM meal_plans")
+    suspend fun deleteAll()
 }

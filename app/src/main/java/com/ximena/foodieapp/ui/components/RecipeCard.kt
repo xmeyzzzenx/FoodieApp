@@ -30,27 +30,25 @@ fun RecipeCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp)
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             // Imagen
             AsyncImage(
-                model = recipe.imagen,
-                contentDescription = recipe.titulo,
-                modifier = Modifier
-                    .size(80.dp),
+                model = recipe.imageUrl,
+                contentDescription = recipe.title,
+                modifier = Modifier.size(80.dp),
                 contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Contenido
+            // Texto
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = recipe.titulo,
+                    text = recipe.title,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -59,24 +57,22 @@ fun RecipeCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "${recipe.minutosPreparacion} min • ${recipe.porciones} porciones",
+                    text = "${recipe.readyInMinutes} min • ${recipe.servings} porciones",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Botón favorita
-            IconButton(
-                onClick = onFavoriteClick
-            ) {
+            // Favorita
+            IconButton(onClick = onFavoriteClick) {
                 Icon(
-                    imageVector = if (recipe.esFavorita) {
+                    imageVector = if (recipe.isFavorite) {
                         Icons.Default.Favorite
                     } else {
                         Icons.Default.FavoriteBorder
                     },
                     contentDescription = "Favorita",
-                    tint = if (recipe.esFavorita) {
+                    tint = if (recipe.isFavorite) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.onSurface

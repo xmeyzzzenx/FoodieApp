@@ -4,92 +4,77 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ximena.foodieapp.data.repository.RecipeRepository
 import com.ximena.foodieapp.domain.model.Recipe
-import com.ximena.foodieapp.domain.usecase.GetRecipesUseCase
-import com.ximena.foodieapp.domain.usecase.SaveFavoriteUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.GetRecipesUseCase
+import com.ximena.foodieapp.domain.usecase.recipes.ToggleFavoriteUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-// ViewModel de la pantalla principal
 class HomeViewModel(
-    private val obtenerRecetas: GetRecipesUseCase,
-    private val guardarFavorita: SaveFavoriteUseCase,
-    private val repository: RecipeRepository,
+    private val getRecipes: GetRecipesUseCase,
+    private val toggleFavorite: ToggleFavoriteUseCase,
+    private val recipeRepository: RecipeRepository,
     private val apiKey: String
 ) : ViewModel() {
 
-    // Estado privado (solo el ViewModel puede modificarlo)
-    private val _estado = MutableStateFlow<EstadoUi>(EstadoUi.Cargando)
-
-    // Estado público (la pantalla solo puede leerlo)
-    val estado: StateFlow<EstadoUi> = _estado.asStateFlow()
-
-    // Estados posibles de la pantalla
-    sealed class EstadoUi {
-        object Cargando : EstadoUi()
-        data class Exito(val recetas: List<Recipe>) : EstadoUi()
-        data class Error(val mensaje: String) : EstadoUi()
+    sealed class UiState {
+        data object Loading : UiState()
+        data class Success(val recipes: List<Recipe>) : UiState()
+        data class Error(val message: String) : UiState()
     }
 
-    // Cargar recetas al iniciar
+    private val _state = MutableStateFlow<UiState>(UiState.Loading)
+    val state: StateFlow<UiState> = _state.asStateFlow()
+
     init {
-        cargarRecetas()
+        loadRecipes()
     }
 
-    // Cargar recetas de la API
-    fun cargarRecetas(busqueda: String? = null) {
+    fun loadRecipes(query: String? = null) {
         viewModelScope.launch {
-            _estado.value = EstadoUi.Cargando
+            _state.value = UiState.Loading
 
             try {
-                val recetas = obtenerRecetas(apiKey, busqueda)
+                val recipes = getRecipes(apiKey, query)
 
-                if (recetas.isEmpty()) {
-                    _estado.value = EstadoUi.Error("No se encontraron recetas")
+                _state.value = if (recipes.isEmpty()) {
+                    UiState.Error("No se encontraron recetas")
                 } else {
-                    _estado.value = EstadoUi.Exito(recetas)
+                    UiState.Success(recipes)
                 }
             } catch (e: Exception) {
-                _estado.value = EstadoUi.Error(
-                    e.message ?: "Error al cargar recetas"
-                )
+                _state.value = UiState.Error(e.message ?: "Error al cargar recetas")
             }
         }
     }
 
-    // Marcar o desmarcar como favorita
-    fun toggleFavorita(receta: Recipe) {
+    fun onToggleFavorite(recipe: Recipe) {
         viewModelScope.launch {
             try {
-                guardarFavorita(receta)
+                toggleFavorite(recipe)
 
-                // Actualizar la lista local
-                val estadoActual = _estado.value
-                if (estadoActual is EstadoUi.Exito) {
-                    val recetasActualizadas = estadoActual.recetas.map {
-                        if (it.id == receta.id) {
-                            it.copy(esFavorita = !it.esFavorita)
-                        } else {
-                            it
+                // Actualizar UI local (opcional, para respuesta inmediata)
+                val current = _state.value
+                if (current is UiState.Success) {
+                    _state.value = UiState.Success(
+                        current.recipes.map {
+                            if (it.id == recipe.id) it.copy(isFavorite = !it.isFavorite) else it
                         }
-                    }
-                    _estado.value = EstadoUi.Exito(recetasActualizadas)
+                    )
                 }
-            } catch (e: Exception) {
-                // Mostrar error pero no cambiar el estado principal
-                println("Error al guardar favorita: ${e.message}")
+            } catch (_: Exception) {
+                // Si falla, no reventamos la app
             }
         }
     }
 
-    // Guardar receta temporal para DetailScreen
-    fun guardarRecetaTemporal(receta: Recipe) {
+    fun saveTempForDetail(recipe: Recipe) {
         viewModelScope.launch {
             try {
-                repository.guardarRecetaTemporal(receta)
-            } catch (e: Exception) {
-                println("Error al guardar temporal: ${e.message}")
+                recipeRepository.save(recipe)
+            } catch (_: Exception) {
+                // Si falla, no pasa nada: Detail luego puede tirar de API si lo implementas
             }
         }
     }

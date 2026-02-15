@@ -9,26 +9,20 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormScreen(
     onNavigateBack: () -> Unit,
-    onSave: (titulo: String, minutos: Int, porciones: Int, descripcion: String) -> Unit
+    onSave: (titulo: String, minutos: Int, porciones: Int, descripcion: String) -> Unit,
+    viewModel: FormViewModel = viewModel()
 ) {
-    // Estados del formulario
-    var titulo by remember { mutableStateOf("") }
-    var minutos by remember { mutableStateOf("") }
-    var porciones by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-
-    // Estados de error
-    var errorTitulo by remember { mutableStateOf(false) }
-    var errorMinutos by remember { mutableStateOf(false) }
-    var errorPorciones by remember { mutableStateOf(false) }
-    var errorDescripcion by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -42,6 +36,7 @@ fun FormScreen(
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -50,93 +45,77 @@ fun FormScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Título
+
+            // ── TÍTULO ──────────────────────────────────────────────────────
             OutlinedTextField(
-                value = titulo,
-                onValueChange = {
-                    titulo = it
-                    errorTitulo = false
-                },
+                value = uiState.titulo,
+                onValueChange = viewModel::onTituloChange,
                 label = { Text("Título de la receta") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorTitulo,
-                supportingText = if (errorTitulo) {
+                isError = uiState.errorTitulo,
+                supportingText = if (uiState.errorTitulo) {
                     { Text("El título no puede estar vacío") }
                 } else null,
                 singleLine = true
             )
 
-            // Minutos de preparación
+            // ── MINUTOS ─────────────────────────────────────────────────────
             OutlinedTextField(
-                value = minutos,
-                onValueChange = {
-                    minutos = it.filter { char -> char.isDigit() }
-                    errorMinutos = false
-                },
+                value = uiState.minutos,
+                onValueChange = viewModel::onMinutosChange,
                 label = { Text("Minutos de preparación") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorMinutos,
-                supportingText = if (errorMinutos) {
+                isError = uiState.errorMinutos,
+                supportingText = if (uiState.errorMinutos) {
                     { Text("Ingresa un número válido") }
                 } else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
             )
 
-            // Porciones
+            // ── PORCIONES ───────────────────────────────────────────────────
             OutlinedTextField(
-                value = porciones,
-                onValueChange = {
-                    porciones = it.filter { char -> char.isDigit() }
-                    errorPorciones = false
-                },
+                value = uiState.porciones,
+                onValueChange = viewModel::onPorcionesChange,
                 label = { Text("Número de porciones") },
                 modifier = Modifier.fillMaxWidth(),
-                isError = errorPorciones,
-                supportingText = if (errorPorciones) {
+                isError = uiState.errorPorciones,
+                supportingText = if (uiState.errorPorciones) {
                     { Text("Ingresa un número válido") }
                 } else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
             )
 
-            // Descripción
+            // ── DESCRIPCIÓN ────────────────────────────────────────────────
             OutlinedTextField(
-                value = descripcion,
-                onValueChange = {
-                    descripcion = it
-                    errorDescripcion = false
-                },
+                value = uiState.descripcion,
+                onValueChange = viewModel::onDescripcionChange,
                 label = { Text("Descripción") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
-                isError = errorDescripcion,
-                supportingText = if (errorDescripcion) {
+                    .height(160.dp),
+                isError = uiState.errorDescripcion,
+                supportingText = if (uiState.errorDescripcion) {
                     { Text("La descripción no puede estar vacía") }
                 } else null,
-                maxLines = 5
+                maxLines = 6
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón guardar
+            // ── BOTÓN GUARDAR ───────────────────────────────────────────────
             Button(
                 onClick = {
-                    // Validar campos
-                    errorTitulo = titulo.isBlank()
-                    errorMinutos = minutos.isBlank() || minutos.toIntOrNull() == null
-                    errorPorciones = porciones.isBlank() || porciones.toIntOrNull() == null
-                    errorDescripcion = descripcion.isBlank()
-
-                    // Si todo es válido, guardar
-                    if (!errorTitulo && !errorMinutos && !errorPorciones && !errorDescripcion) {
+                    val ok = viewModel.validar()
+                    if (ok) {
                         onSave(
-                            titulo,
-                            minutos.toInt(),
-                            porciones.toInt(),
-                            descripcion
+                            uiState.titulo.trim(),
+                            uiState.minutos.toInt(),
+                            uiState.porciones.toInt(),
+                            uiState.descripcion.trim()
                         )
+                        viewModel.limpiar()
                     }
                 },
                 modifier = Modifier.fillMaxWidth()

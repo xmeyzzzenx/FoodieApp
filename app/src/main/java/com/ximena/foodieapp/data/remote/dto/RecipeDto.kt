@@ -1,14 +1,11 @@
 package com.ximena.foodieapp.data.remote.dto
 
-import com.google.gson.annotations.SerializedName
-
-// Receta básica de la API
+// DTO de receta (Spoonacular)
 data class RecipeDto(
-    val id: Int,
-    val title: String,
-    val image: String,
-    @SerializedName("readyInMinutes")
-    val readyInMinutes: Int,
-    val servings: Int,
-    val summary: String
+    val id: Int,                // ID receta
+    val title: String,          // Título
+    val image: String?,         // URL imagen
+    val readyInMinutes: Int,    // Minutos preparación
+    val servings: Int,          // Porciones
+    val summary: String         // Descripción
 )

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -20,22 +21,22 @@ import com.ximena.foodieapp.ui.components.LoadingIndicator
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    recetaId: Int,
+    recipeId: Int,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
 
-    // Crear ViewModel
-    val viewModel = remember {
+    val viewModel = remember(recipeId) {
         DetailViewModel(
-            obtenerRecetaPorId = AppDependencies.provideGetRecipeByIdUseCase(context),
-            guardarFavorita = AppDependencies.provideSaveFavoriteUseCase(context),
-            recetaId = recetaId
+            getRecipeById = AppDependencies.provideGetRecipeByIdUseCase(context),
+            recipeRepository = AppDependencies.provideRecipeRepository(context),
+            toggleFavorite = AppDependencies.provideToggleFavoriteUseCase(context),
+            apiKey = AppDependencies.getApiKey(),
+            recipeId = recipeId
         )
     }
 
-    // Observar el estado
-    val receta by viewModel.receta.collectAsState()
+    val state by viewModel.state.collectAsState()
 
     Scaffold(
         topBar = {
@@ -47,20 +48,14 @@ fun DetailScreen(
                     }
                 },
                 actions = {
-                    if (receta != null) {
-                        IconButton(onClick = { viewModel.toggleFavorita() }) {
+                    val recipe = (state as? DetailViewModel.UiState.Success)?.recipe
+                    if (recipe != null) {
+                        IconButton(onClick = { viewModel.onToggleFavorite() }) {
                             Icon(
-                                imageVector = if (receta?.esFavorita == true) {
-                                    Icons.Default.Favorite
-                                } else {
-                                    Icons.Default.FavoriteBorder
-                                },
+                                imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                 contentDescription = "Favorita",
-                                tint = if (receta?.esFavorita == true) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurface
-                                }
+                                tint = if (recipe.isFavorite) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -68,65 +63,85 @@ fun DetailScreen(
             )
         }
     ) { padding ->
-        if (receta == null) {
-            LoadingIndicator()
-        } else {
-            val recetaActual = receta!!
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // Imagen de la receta
-                AsyncImage(
-                    model = recetaActual.imagen,
-                    contentDescription = recetaActual.titulo,
+        when (val s = state) {
+            is DetailViewModel.UiState.Loading -> {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(250.dp),
-                    contentScale = ContentScale.Crop
-                )
-
-                // Contenido
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Título
-                    Text(
-                        text = recetaActual.titulo,
-                        style = MaterialTheme.typography.headlineMedium
+                    LoadingIndicator()
+                }
+            }
+
+            is DetailViewModel.UiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = s.message,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Button(onClick = { viewModel.reload() }) {
+                            Text("Reintentar")
+                        }
+                    }
+                }
+            }
+
+            is DetailViewModel.UiState.Success -> {
+                val recipe = s.recipe
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    AsyncImage(
+                        model = recipe.imageUrl,
+                        contentDescription = recipe.title,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(250.dp),
+                        contentScale = ContentScale.Crop
                     )
 
-                    // Información básica
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp)
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        InfoChip(
-                            label = "Tiempo",
-                            value = "${recetaActual.minutosPreparacion} min"
+                        Text(
+                            text = recipe.title,
+                            style = MaterialTheme.typography.headlineMedium
                         )
 
-                        InfoChip(
-                            label = "Porciones",
-                            value = "${recetaActual.porciones}"
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                        ) {
+                            InfoLine(label = "Tiempo", value = "${recipe.readyInMinutes} min")
+                            InfoLine(label = "Porciones", value = "${recipe.servings}")
+                        }
+
+                        Text(
+                            text = "Descripción",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+
+                        Text(
+                            text = recipe.summary.cleanHtml(),
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
-
-                    // Descripción
-                    Text(
-                        text = "Descripción",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
-                    Text(
-                        text = recetaActual.descripcion
-                            .replace(Regex("<[^>]*>"), ""),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
                 }
             }
         }
@@ -134,10 +149,7 @@ fun DetailScreen(
 }
 
 @Composable
-private fun InfoChip(
-    label: String,
-    value: String
-) {
+private fun InfoLine(label: String, value: String) {
     Column {
         Text(
             text = label,
@@ -150,3 +162,5 @@ private fun InfoChip(
         )
     }
 }
+
+private fun String.cleanHtml(): String = replace(Regex("<[^>]*>"), "")

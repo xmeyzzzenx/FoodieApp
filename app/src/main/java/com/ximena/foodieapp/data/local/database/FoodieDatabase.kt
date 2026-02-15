@@ -7,12 +7,17 @@ import com.ximena.foodieapp.data.local.dao.RecipeDao
 import com.ximena.foodieapp.data.local.entity.MealPlanEntity
 import com.ximena.foodieapp.data.local.entity.RecipeEntity
 
-// Configuración de la base de datos local
+// Base de datos local (Room)
 @Database(
-    entities = [RecipeEntity::class, MealPlanEntity::class],
-    version = 1
+    entities = [RecipeEntity::class, MealPlanEntity::class], // Tablas
+    version = 1, // Versión de la BD
+    exportSchema = false // Evita generar schema en proyecto
 )
 abstract class FoodieDatabase : RoomDatabase() {
+
+    // Acceso a recetas
     abstract fun recipeDao(): RecipeDao
+
+    // Acceso al plan semanal
     abstract fun mealPlanDao(): MealPlanDao
 }

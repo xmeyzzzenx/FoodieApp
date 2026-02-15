@@ -1,5 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FoodieApp</string>
-    <string name="com_auth0_domain">dev-tu-dominio.auth0.com</string>
-    <string name="com_auth0_client_id">TU_CLIENT_ID</string>
+
+    <!-- Auth0 -->
+    <string name="com_auth0_domain">dev-qjujhqmlbgx8725a.eu.auth0.com</string>
+    <string name="com_auth0_client_id">GLlPFFy9Sz9K0pwML1eREsf4gnBtfggf</string>
 </resources>

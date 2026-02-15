@@ -11,6 +11,21 @@ import com.ximena.foodieapp.ui.screens.favorites.FavoritesScreen
 import com.ximena.foodieapp.ui.screens.form.FormScreen
 import com.ximena.foodieapp.ui.screens.home.HomeScreen
 import com.ximena.foodieapp.ui.screens.login.LoginScreen
+import com.ximena.foodieapp.ui.screens.mealplan.MealPlanScreen
+
+// Rutas de navegación (tipado para no liarla con strings sueltos)
+sealed class Screen(val route: String) {
+    data object Login : Screen("login")
+    data object Home : Screen("home")
+    data object Favorites : Screen("favorites")
+    data object MealPlan : Screen("mealplan")
+    data object Form : Screen("form")
+
+    data object Detail : Screen("detail/{recipeId}") {
+        const val ARG_RECIPE_ID = "recipeId"
+        fun createRoute(recipeId: Int) = "detail/$recipeId"
+    }
+}
 
 @Composable
 fun AppNavigation() {
@@ -18,36 +33,40 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = Screen.Login.route
     ) {
         // Login
-        composable("login") {
+        composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
         }
 
         // Home
-        composable("home") {
+        composable(Screen.Home.route) {
             HomeScreen(
-                onNavigateToDetail = { recetaId ->
-                    navController.navigate("detail/$recetaId")
+                onNavigateToDetail = { recipeId ->
+                    navController.navigate(Screen.Detail.createRoute(recipeId))
                 },
                 onNavigateToFavorites = {
-                    navController.navigate("favorites")
+                    navController.navigate(Screen.Favorites.route)
+                },
+                onNavigateToMealPlan = {
+                    navController.navigate(Screen.MealPlan.route)
                 }
             )
         }
 
-        // Favoritas
-        composable("favorites") {
+        // Favorites
+        composable(Screen.Favorites.route) {
             FavoritesScreen(
-                onNavigateToDetail = { recetaId ->
-                    navController.navigate("detail/$recetaId")
+                onNavigateToDetail = { recipeId ->
+                    navController.navigate(Screen.Detail.createRoute(recipeId))
                 },
                 onNavigateBack = {
                     navController.popBackStack()
@@ -55,28 +74,33 @@ fun AppNavigation() {
             )
         }
 
-        // Detalle
+        // Detail (✅ encaja con tu DetailScreen(recipeId, onNavigateBack))
         composable(
-            route = "detail/{recetaId}",
-            arguments = listOf(navArgument("recetaId") { type = NavType.IntType })
+            route = Screen.Detail.route,
+            arguments = listOf(
+                navArgument(Screen.Detail.ARG_RECIPE_ID) { type = NavType.IntType }
+            )
         ) { backStackEntry ->
-            val recetaId = backStackEntry.arguments?.getInt("recetaId") ?: 0
+            val recipeId = backStackEntry.arguments?.getInt(Screen.Detail.ARG_RECIPE_ID) ?: 0
 
             DetailScreen(
-                recetaId = recetaId,
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                recipeId = recipeId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // Formulario
-        composable(route = "form") {
+        // MealPlan
+        composable(Screen.MealPlan.route) {
+            MealPlanScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // Form
+        composable(Screen.Form.route) {
             FormScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                },
-                onSave = { titulo, minutos, porciones, descripcion ->
+                onNavigateBack = { navController.popBackStack() },
+                onSave = { _, _, _, _ ->
                     navController.popBackStack()
                 }
             )

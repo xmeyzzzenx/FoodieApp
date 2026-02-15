@@ -7,31 +7,39 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface RecipeDao {
 
-    // Insertar o actualizar receta
+    // ── READ ──────────────────────────────────────────────────────────────
+
+    // Todas las recetas guardadas en Room (por si la usas como caché)
+    @Query("SELECT * FROM recipes ORDER BY title ASC")
+    fun getAll(): Flow<List<RecipeEntity>>
+
+    // Receta guardada por ID (en Room)
+    @Query("SELECT * FROM recipes WHERE id = :recipeId LIMIT 1")
+    fun getById(recipeId: Int): Flow<RecipeEntity?>
+
+    // Solo favoritas (en Room)
+    @Query("SELECT * FROM recipes WHERE isFavorite = 1 ORDER BY title ASC")
+    fun getFavorites(): Flow<List<RecipeEntity>>
+
+    // Buscar dentro de favoritas por título (en Room)
+    @Query(
+        "SELECT * FROM recipes " +
+                "WHERE isFavorite = 1 AND title LIKE '%' || :query || '%' " +
+                "ORDER BY title ASC"
+    )
+    fun search(query: String): Flow<List<RecipeEntity>>
+
+    // ── WRITE ─────────────────────────────────────────────────────────────
+
+    // Insertar o reemplazar (lo usamos para guardar y para actualizar favorito)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertar(receta: RecipeEntity)
+    suspend fun insert(recipe: RecipeEntity)
 
-    // Obtener todas las recetas
-    @Query("SELECT * FROM recetas")
-    fun obtenerTodas(): Flow<List<RecipeEntity>>
-
-    // Obtener solo favoritas
-    @Query("SELECT * FROM recetas WHERE esFavorita = 1")
-    fun obtenerFavoritas(): Flow<List<RecipeEntity>>
-
-    // Buscar recetas por título
-    @Query("SELECT * FROM recetas WHERE titulo LIKE '%' || :busqueda || '%'")
-    fun buscarPorTitulo(busqueda: String): Flow<List<RecipeEntity>>
-
-    // Actualizar receta
+    // Actualizar (opcional: si usas insert(REPLACE) casi no lo necesitas)
     @Update
-    suspend fun actualizar(receta: RecipeEntity)
+    suspend fun update(recipe: RecipeEntity)
 
-    // Eliminar receta
+    // Eliminar (por ejemplo, quitar de favoritas)
     @Delete
-    suspend fun eliminar(receta: RecipeEntity)
-
-    // Obtener receta por ID (sin importar si es favorita)
-    @Query("SELECT * FROM recetas WHERE id = :recetaId LIMIT 1")
-    fun obtenerPorId(recetaId: Int): Flow<RecipeEntity?>
+    suspend fun delete(recipe: RecipeEntity)
 }

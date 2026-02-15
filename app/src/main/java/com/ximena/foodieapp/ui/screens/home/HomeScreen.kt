@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -20,109 +21,108 @@ import com.ximena.foodieapp.ui.components.RecipeCard
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (Int) -> Unit,
-    onNavigateToFavorites: () -> Unit
+    onNavigateToFavorites: () -> Unit,
+    onNavigateToMealPlan: () -> Unit
 ) {
     val context = LocalContext.current
 
-    // Crear ViewModel
     val viewModel = remember {
         HomeViewModel(
-            obtenerRecetas = AppDependencies.provideGetRecipesUseCase(context),
-            guardarFavorita = AppDependencies.provideSaveFavoriteUseCase(context),
-            repository = AppDependencies.provideRecipeRepository(context),
+            getRecipes = AppDependencies.provideGetRecipesUseCase(context),
+            toggleFavorite = AppDependencies.provideToggleFavoriteUseCase(context),
+            recipeRepository = AppDependencies.provideRecipeRepository(context),
             apiKey = AppDependencies.getApiKey()
         )
     }
 
-    // Observar el estado
-    val estado by viewModel.estado.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    // Estado de la búsqueda
-    var textoBusqueda by remember { mutableStateOf("") }
-    var mostrarBusqueda by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var showSearch by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Recetas") },
                 actions = {
-                    // Botón de búsqueda
-                    IconButton(onClick = { mostrarBusqueda = !mostrarBusqueda }) {
+                    IconButton(onClick = { showSearch = !showSearch }) {
                         Icon(Icons.Default.Search, contentDescription = "Buscar")
                     }
-
-                    // Botón de favoritas
                     IconButton(onClick = onNavigateToFavorites) {
                         Icon(Icons.Default.Favorite, contentDescription = "Favoritas")
+                    }
+                    IconButton(onClick = onNavigateToMealPlan) {
+                        Icon(Icons.Default.DateRange, contentDescription = "Plan semanal")
                     }
                 }
             )
         }
     ) { padding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Barra de búsqueda
-            if (mostrarBusqueda) {
+
+            if (showSearch) {
                 OutlinedTextField(
-                    value = textoBusqueda,
-                    onValueChange = { textoBusqueda = it },
+                    value = query,
+                    onValueChange = { query = it },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
                     placeholder = { Text("Buscar recetas...") },
                     singleLine = true,
                     trailingIcon = {
-                        IconButton(onClick = {
-                            viewModel.cargarRecetas(textoBusqueda.ifBlank { null })
-                        }) {
+                        IconButton(onClick = { viewModel.loadRecipes(query.ifBlank { null }) }) {
                             Icon(Icons.Default.Search, contentDescription = "Buscar")
                         }
                     }
                 )
             }
 
-            // Contenido según el estado
-            when (val estadoActual = estado) {
-                is HomeViewModel.EstadoUi.Cargando -> {
+            when (val s = state) {
+                is HomeViewModel.UiState.Loading -> {
                     LoadingIndicator()
                 }
 
-                is HomeViewModel.EstadoUi.Exito -> {
+                is HomeViewModel.UiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(estadoActual.recetas) { receta ->
+                        items(
+                            items = s.recipes,
+                            key = { it.id }
+                        ) { recipe ->
                             RecipeCard(
-                                recipe = receta,
+                                recipe = recipe,
                                 onClick = {
-                                    viewModel.guardarRecetaTemporal(receta)
-                                    onNavigateToDetail(receta.id)
+                                    viewModel.saveTempForDetail(recipe)
+                                    onNavigateToDetail(recipe.id)
                                 },
-                                onFavoriteClick = { viewModel.toggleFavorita(receta) }
+                                onFavoriteClick = { viewModel.onToggleFavorite(recipe) }
                             )
                         }
                     }
                 }
 
-                is HomeViewModel.EstadoUi.Error -> {
+                is HomeViewModel.UiState.Error -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Text(
-                                text = estadoActual.mensaje,
+                                text = s.message,
                                 style = MaterialTheme.typography.bodyLarge
                             )
-                            Button(onClick = { viewModel.cargarRecetas() }) {
+                            Button(onClick = { viewModel.loadRecipes() }) {
                                 Text("Reintentar")
                             }
                         }

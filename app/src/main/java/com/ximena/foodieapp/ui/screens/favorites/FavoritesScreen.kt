@@ -24,21 +24,18 @@ fun FavoritesScreen(
 ) {
     val context = LocalContext.current
 
-    // Crear ViewModel
     val viewModel = remember {
         FavoritesViewModel(
-            obtenerFavoritas = AppDependencies.provideGetFavoritesUseCase(context),
-            guardarFavorita = AppDependencies.provideSaveFavoriteUseCase(context),
-            buscarFavoritas = AppDependencies.provideSearchFavoritesUseCase(context)
+            getFavorites = AppDependencies.provideGetFavoritesUseCase(context),
+            searchFavorites = AppDependencies.provideSearchFavoritesUseCase(context),
+            toggleFavorite = AppDependencies.provideToggleFavoriteUseCase(context)
         )
     }
 
-    // Observar el estado
-    val estado by viewModel.estado.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    // Estado de la búsqueda
-    var textoBusqueda by remember { mutableStateOf("") }
-    var mostrarBusqueda by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    var showSearch by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -50,7 +47,7 @@ fun FavoritesScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { mostrarBusqueda = !mostrarBusqueda }) {
+                    IconButton(onClick = { showSearch = !showSearch }) {
                         Icon(Icons.Default.Search, contentDescription = "Buscar")
                     }
                 }
@@ -62,13 +59,12 @@ fun FavoritesScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Barra de búsqueda
-            if (mostrarBusqueda) {
+            if (showSearch) {
                 OutlinedTextField(
-                    value = textoBusqueda,
+                    value = query,
                     onValueChange = {
-                        textoBusqueda = it
-                        viewModel.buscar(it)
+                        query = it
+                        viewModel.onSearch(it)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -78,29 +74,31 @@ fun FavoritesScreen(
                 )
             }
 
-            // Contenido según el estado
-            when (val estadoActual = estado) {
-                is FavoritesViewModel.EstadoUi.Cargando -> {
+            when (val s = state) {
+                is FavoritesViewModel.UiState.Loading -> {
                     LoadingIndicator()
                 }
 
-                is FavoritesViewModel.EstadoUi.Exito -> {
+                is FavoritesViewModel.UiState.Success -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(estadoActual.recetas) { receta ->
+                        items(
+                            items = s.recipes,
+                            key = { it.id }
+                        ) { recipe ->
                             RecipeCard(
-                                recipe = receta,
-                                onClick = { onNavigateToDetail(receta.id) },
-                                onFavoriteClick = { viewModel.eliminarFavorita(receta) }
+                                recipe = recipe,
+                                onClick = { onNavigateToDetail(recipe.id) },
+                                onFavoriteClick = { viewModel.onToggleFavorite(recipe) }
                             )
                         }
                     }
                 }
 
-                is FavoritesViewModel.EstadoUi.Vacio -> {
+                is FavoritesViewModel.UiState.Empty -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -110,18 +108,15 @@ fun FavoritesScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = if (textoBusqueda.isBlank()) {
-                                    "No tienes favoritas guardadas"
-                                } else {
-                                    "No se encontraron recetas"
-                                },
+                                text = if (query.isBlank()) "No tienes favoritas guardadas"
+                                else "No se encontraron recetas",
                                 style = MaterialTheme.typography.bodyLarge
                             )
 
-                            if (textoBusqueda.isNotBlank()) {
+                            if (query.isNotBlank()) {
                                 Button(onClick = {
-                                    textoBusqueda = ""
-                                    viewModel.cargarFavoritas()
+                                    query = ""
+                                    viewModel.onSearch("")
                                 }) {
                                     Text("Limpiar búsqueda")
                                 }
