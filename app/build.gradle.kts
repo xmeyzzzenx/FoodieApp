@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
+import org.gradle.api.GradleException
 
 plugins {
     alias(libs.plugins.android.application)
@@ -23,22 +24,31 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Auth0 manifest placeholders (aunque aún no lo uses, no molesta)
-        manifestPlaceholders["auth0Domain"] = "@string/com_auth0_domain"
-        manifestPlaceholders["auth0Scheme"] = "com.ximena.foodieapp"
-
-        // Spoonacular API key (desde local.properties)
+        // Leer claves desde local.properties (Spoonacular + Auth0)
         val localProperties = Properties().apply {
             val file = rootProject.file("local.properties")
             if (file.exists()) load(FileInputStream(file))
         }
-        val spoonacularKey = localProperties.getProperty("SPOONACULAR_API_KEY") ?: ""
 
-        buildConfigField(
-            "String",
-            "SPOONACULAR_API_KEY",
-            "\"$spoonacularKey\""
-        )
+        // ── Spoonacular ────────────────────────────────────────────────────
+        val spoonacularKey = (localProperties.getProperty("SPOONACULAR_API_KEY") ?: "").trim()
+        buildConfigField("String", "SPOONACULAR_API_KEY", "\"$spoonacularKey\"")
+
+        // ── Auth0 ──────────────────────────────────────────────────────────
+        val auth0Domain = (localProperties.getProperty("AUTH0_DOMAIN") ?: "").trim()
+        val auth0ClientId = (localProperties.getProperty("AUTH0_CLIENT_ID") ?: "").trim()
+
+        // Si faltan, mejor petar aquí con mensaje claro
+        if (auth0Domain.isBlank() || auth0ClientId.isBlank()) {
+            throw GradleException("Faltan AUTH0_DOMAIN o AUTH0_CLIENT_ID en local.properties")
+        }
+
+        buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
+        buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
+
+        // Placeholders para el intent-filter del Manifest (callback de Auth0)
+        manifestPlaceholders["auth0Domain"] = auth0Domain
+        manifestPlaceholders["auth0Scheme"] = "com.ximena.foodieapp"
     }
 
     buildTypes {
@@ -101,6 +111,9 @@ dependencies {
 
     // ── AUTH0 ─────────────────────────────────────────────────────────────
     implementation("com.auth0.android:auth0:2.11.0")
+
+    // ── TOKENS CIFRADOS ───────────────────────────────────────────────────
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // ── COROUTINES ────────────────────────────────────────────────────────
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

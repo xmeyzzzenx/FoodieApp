@@ -1,14 +1,17 @@
 package com.ximena.foodieapp.ui.screens.login
 
+import android.app.Activity
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.RestaurantMenu
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ximena.foodieapp.data.auth.AuthManager
 
 @Composable
 fun LoginRoute(
@@ -22,6 +25,24 @@ fun LoginRoute(
 fun LoginScreen(
     onLoginSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
+    val activity = context as Activity
+
+    val viewModel = remember { AuthViewModel(AuthManager(context)) }
+    val state by viewModel.state.collectAsState()
+
+    // Si ya hay sesión, entra directo
+    LaunchedEffect(Unit) {
+        viewModel.checkSession()
+    }
+
+    // Cuando se loguea, navega
+    LaunchedEffect(state) {
+        if (state is AuthViewModel.UiState.LoggedIn) {
+            onLoginSuccess()
+        }
+    }
+
     Scaffold { padding ->
         Column(
             modifier = Modifier
@@ -56,22 +77,40 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = onLoginSuccess,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            ) {
-                Text(text = "Entrar")
+            when (val s = state) {
+                is AuthViewModel.UiState.Loading -> {
+                    CircularProgressIndicator()
+                }
+
+                is AuthViewModel.UiState.Error -> {
+                    Text(
+                        text = s.message,
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = { viewModel.login(activity) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Text("Entrar con Auth0")
+                    }
+                }
+
+                else -> {
+                    Button(
+                        onClick = { viewModel.login(activity) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    ) {
+                        Text("Entrar con Auth0")
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Login temporal (Auth0 lo metemos después)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

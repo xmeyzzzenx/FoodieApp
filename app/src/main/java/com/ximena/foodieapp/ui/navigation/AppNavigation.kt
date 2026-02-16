@@ -13,7 +13,7 @@ import com.ximena.foodieapp.ui.screens.home.HomeScreen
 import com.ximena.foodieapp.ui.screens.login.LoginScreen
 import com.ximena.foodieapp.ui.screens.mealplan.MealPlanScreen
 
-// Rutas de navegación (tipado para no liarla con strings sueltos)
+// Rutas de navegación
 sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Home : Screen("home")
@@ -58,6 +58,13 @@ fun AppNavigation() {
                 },
                 onNavigateToMealPlan = {
                     navController.navigate(Screen.MealPlan.route)
+                },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        // 🔥 Esto evita volver atrás a pantallas protegidas
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
                 }
             )
         }
@@ -68,13 +75,11 @@ fun AppNavigation() {
                 onNavigateToDetail = { recipeId ->
                     navController.navigate(Screen.Detail.createRoute(recipeId))
                 },
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
-        // Detail (✅ encaja con tu DetailScreen(recipeId, onNavigateBack))
+        // Detail
         composable(
             route = Screen.Detail.route,
             arguments = listOf(
@@ -100,9 +105,7 @@ fun AppNavigation() {
         composable(Screen.Form.route) {
             FormScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onSave = { _, _, _, _ ->
-                    navController.popBackStack()
-                }
+                onSave = { _, _, _, _ -> navController.popBackStack() }
             )
         }
     }
