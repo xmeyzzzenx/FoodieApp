@@ -3,14 +3,13 @@ package com.ximena.foodieapp.di
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.ximena.foodieapp.BuildConfig
-import com.ximena.foodieapp.data.remote.api.SpoonacularApi
+import com.ximena.foodieapp.data.remote.api.TheMealDbApi
 import com.ximena.foodieapp.data.repository.RecipesRepositoryImpl
 import com.ximena.foodieapp.domain.repository.RecipesRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -30,21 +29,6 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttp(): OkHttpClient {
-        val apiKeyInterceptor = Interceptor { chain ->
-            val original = chain.request()
-            val originalUrl = original.url
-
-            val newUrl = originalUrl.newBuilder()
-                .addQueryParameter("apiKey", BuildConfig.SPOONACULAR_API_KEY)
-                .build()
-
-            val newRequest = original.newBuilder()
-                .url(newUrl)
-                .build()
-
-            chain.proceed(newRequest)
-        }
-
         val logging = HttpLoggingInterceptor().apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
@@ -54,7 +38,6 @@ object NetworkModule {
         }
 
         return OkHttpClient.Builder()
-            .addInterceptor(apiKeyInterceptor)
             .addInterceptor(logging)
             .build()
     }
@@ -66,7 +49,7 @@ object NetworkModule {
         gson: Gson
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://api.spoonacular.com/")
+            .baseUrl("https://www.themealdb.com/api/json/v1/1/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -74,13 +57,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideSpoonacularApi(retrofit: Retrofit): SpoonacularApi {
-        return retrofit.create(SpoonacularApi::class.java)
+    fun provideTheMealDbApi(retrofit: Retrofit): TheMealDbApi {
+        return retrofit.create(TheMealDbApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideRecipesRepository(api: SpoonacularApi): RecipesRepository {
+    fun provideRecipesRepository(api: TheMealDbApi): RecipesRepository {
         return RecipesRepositoryImpl(api)
     }
 }

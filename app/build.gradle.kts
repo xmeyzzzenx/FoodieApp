@@ -22,11 +22,6 @@ android {
 
         buildConfigField(
             "String",
-            "SPOONACULAR_API_KEY",
-            "\"${project.findProperty("SPOONACULAR_API_KEY") ?: ""}\""
-        )
-        buildConfigField(
-            "String",
             "AUTH0_DOMAIN",
             "\"${project.findProperty("AUTH0_DOMAIN") ?: ""}\""
         )
