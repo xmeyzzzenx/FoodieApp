@@ -1,124 +1,93 @@
 package com.ximena.foodieapp.ui.screens.favorites
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.ximena.foodieapp.di.AppDependencies
-import com.ximena.foodieapp.ui.components.LoadingIndicator
-import com.ximena.foodieapp.ui.components.RecipeCard
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ximena.foodieapp.ui.components.AppTopBar
+import com.ximena.foodieapp.ui.components.EmptyState
+import com.ximena.foodieapp.ui.components.SearchField
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
-    onNavigateToDetail: (Int) -> Unit,
-    onNavigateBack: () -> Unit
+    onOpenRecipe: (recipeId: Int) -> Unit,
+    onBack: () -> Unit,
+    viewModel: FavoritesViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-
-    val viewModel = remember {
-        FavoritesViewModel(
-            getFavorites = AppDependencies.provideGetFavoritesUseCase(context),
-            searchFavorites = AppDependencies.provideSearchFavoritesUseCase(context),
-            toggleFavorite = AppDependencies.provideToggleFavoriteUseCase(context)
-        )
-    }
-
-    val state by viewModel.state.collectAsState()
-
-    var query by remember { mutableStateOf("") }
-    var showSearch by remember { mutableStateOf(false) }
+    val query by viewModel.query.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Mis Favoritas") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showSearch = !showSearch }) {
-                        Icon(Icons.Default.Search, contentDescription = "Buscar")
-                    }
-                }
+            AppTopBar(
+                title = "Favoritas",
+                navigationIcon = Icons.Default.ArrowBack,
+                onNavigationClick = onBack
             )
         }
     ) { padding ->
-        Column(
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (showSearch) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = {
-                        query = it
-                        viewModel.onSearch(it)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    placeholder = { Text("Buscar en favoritas...") },
-                    singleLine = true
+            SearchField(
+                value = query,
+                onValueChange = viewModel::onQueryChange,
+                placeholder = "Buscar favoritas"
+            )
+
+            if (favorites.isEmpty()) {
+                EmptyState(
+                    title = "No tienes favoritas",
+                    subtitle = "Marca alguna receta desde Explorar"
                 )
-            }
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(favorites.size) { index ->
+                        val item = favorites[index]
 
-            when (val s = state) {
-                is FavoritesViewModel.UiState.Loading -> {
-                    LoadingIndicator()
-                }
-
-                is FavoritesViewModel.UiState.Success -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = s.recipes,
-                            key = { it.id }
-                        ) { recipe ->
-                            RecipeCard(
-                                recipe = recipe,
-                                onClick = { onNavigateToDetail(recipe.id) },
-                                onFavoriteClick = { viewModel.onToggleFavorite(recipe) }
-                            )
-                        }
-                    }
-                }
-
-                is FavoritesViewModel.UiState.Empty -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        androidx.compose.material3.Card(
+                            modifier = Modifier.padding(vertical = 6.dp)
                         ) {
-                            Text(
-                                text = if (query.isBlank()) "No tienes favoritas guardadas"
-                                else "No se encontraron recetas",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
+                            androidx.compose.foundation.layout.Row(
+                                modifier = Modifier
+                                    .padding(12.dp)
+                                    .fillMaxSize(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                androidx.compose.foundation.layout.Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(text = item.title)
+                                }
 
-                            if (query.isNotBlank()) {
-                                Button(onClick = {
-                                    query = ""
-                                    viewModel.onSearch("")
-                                }) {
-                                    Text("Limpiar búsqueda")
+                                IconButton(onClick = { viewModel.remove(item.recipeId) }) {
+                                    Icon(Icons.Default.Delete, contentDescription = null)
+                                }
+
+                                androidx.compose.material3.Button(
+                                    onClick = { onOpenRecipe(item.recipeId) }
+                                ) {
+                                    Text(text = "Abrir")
                                 }
                             }
                         }

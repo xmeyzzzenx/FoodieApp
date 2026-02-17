@@ -2,66 +2,55 @@ package com.ximena.foodieapp.ui.screens.favorites
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ximena.foodieapp.domain.model.Recipe
-import com.ximena.foodieapp.domain.usecase.recipes.GetFavoritesUseCase
-import com.ximena.foodieapp.domain.usecase.recipes.SearchFavoritesUseCase
-import com.ximena.foodieapp.domain.usecase.recipes.ToggleFavoriteUseCase
+import com.ximena.foodieapp.data.local.entity.FavoriteRecipeEntity
+import com.ximena.foodieapp.domain.repository.PlannerRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class FavoritesViewModel(
-    private val getFavorites: GetFavoritesUseCase,
-    private val searchFavorites: SearchFavoritesUseCase,
-    private val toggleFavorite: ToggleFavoriteUseCase
+@HiltViewModel
+class FavoritesViewModel @Inject constructor(
+    private val plannerRepository: PlannerRepository
 ) : ViewModel() {
 
-    sealed class UiState {
-        data object Loading : UiState()
-        data class Success(val recipes: List<Recipe>) : UiState()
-        data object Empty : UiState()
-    }
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
 
-    private val _state = MutableStateFlow<UiState>(UiState.Loading)
-    val state: StateFlow<UiState> = _state.asStateFlow()
+    private val _favorites = MutableStateFlow<List<FavoriteRecipeEntity>>(emptyList())
+    val favorites: StateFlow<List<FavoriteRecipeEntity>> = _favorites.asStateFlow()
 
-    private var searchJob: Job? = null
+    private var observeJob: Job? = null
 
     init {
-        observeFavorites()
+        observe()
     }
 
-    private fun observeFavorites() {
-        viewModelScope.launch {
-            getFavorites().collect { list ->
-                _state.value = if (list.isEmpty()) UiState.Empty else UiState.Success(list)
+    fun onQueryChange(value: String) {
+        _query.value = value
+        observe()
+    }
+
+    private fun observe() {
+        observeJob?.cancel()
+        observeJob = viewModelScope.launch {
+            val q = _query.value.trim()
+            val flow = if (q.isBlank()) {
+                plannerRepository.observeFavorites()
+            } else {
+                plannerRepository.searchFavorites(q)
             }
+            flow.collectLatest { _favorites.value = it }
         }
     }
 
-    fun onSearch(query: String) {
-        searchJob?.cancel()
-
-        if (query.isBlank()) {
-            // volvemos al flow normal de favoritas
-            observeFavorites()
-            return
-        }
-
-        searchJob = viewModelScope.launch {
-            _state.value = UiState.Loading
-            searchFavorites(query).collect { list ->
-                _state.value = if (list.isEmpty()) UiState.Empty else UiState.Success(list)
-            }
-        }
-    }
-
-    fun onToggleFavorite(recipe: Recipe) {
+    fun remove(recipeId: Int) {
         viewModelScope.launch {
-            toggleFavorite(recipe)
-            // No hace falta tocar state aquí: Room emite el cambio y se refresca solo.
+            plannerRepository.removeFavorite(recipeId)
         }
     }
 }
