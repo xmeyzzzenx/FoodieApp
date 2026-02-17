@@ -13,7 +13,7 @@ interface PlannerRepository {
     suspend fun addFavorite(entity: FavoriteRecipeEntity)
     suspend fun removeFavorite(recipeId: Int)
 
-    fun observeMealPlan(): Flow<List<MealPlanEntity>>
+    fun observeMealPlanWeek(weekKey: String): Flow<List<MealPlanEntity>>
     suspend fun saveMealSlot(entity: MealPlanEntity)
-    suspend fun clearMealSlot(day: String, mealType: String)
+    suspend fun clearMealSlot(weekKey: String, dayOfWeek: Int, mealType: String)
 }

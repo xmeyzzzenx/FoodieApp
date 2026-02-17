@@ -23,7 +23,7 @@ import com.ximena.foodieapp.ui.components.SearchField
 
 @Composable
 fun PickLocalScreen(
-    day: String,
+    dayOfWeek: Int,
     mealType: String,
     onPick: (localId: Long, title: String, image: String?) -> Unit,
     onBack: () -> Unit,
@@ -31,6 +31,17 @@ fun PickLocalScreen(
 ) {
     val query by viewModel.query.collectAsState()
     val recipes by viewModel.recipes.collectAsState()
+
+    val dayLabel = when (dayOfWeek) {
+        1 -> "Lunes"
+        2 -> "Martes"
+        3 -> "Miércoles"
+        4 -> "Jueves"
+        5 -> "Viernes"
+        6 -> "Sábado"
+        7 -> "Domingo"
+        else -> "Día $dayOfWeek"
+    }
 
     Scaffold(
         topBar = {
@@ -48,7 +59,7 @@ fun PickLocalScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(text = "$day - $mealType")
+            Text(text = "$dayLabel - $mealType")
 
             SearchField(
                 value = query,

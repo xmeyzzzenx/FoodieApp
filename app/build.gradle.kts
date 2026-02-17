@@ -20,9 +20,21 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "SPOONACULAR_API_KEY", "\"${project.findProperty("SPOONACULAR_API_KEY") ?: ""}\"")
-        buildConfigField("String", "AUTH0_DOMAIN", "\"${project.findProperty("AUTH0_DOMAIN") ?: ""}\"")
-        buildConfigField("String", "AUTH0_CLIENT_ID", "\"${project.findProperty("AUTH0_CLIENT_ID") ?: ""}\"")
+        buildConfigField(
+            "String",
+            "SPOONACULAR_API_KEY",
+            "\"${project.findProperty("SPOONACULAR_API_KEY") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "AUTH0_DOMAIN",
+            "\"${project.findProperty("AUTH0_DOMAIN") ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "AUTH0_CLIENT_ID",
+            "\"${project.findProperty("AUTH0_CLIENT_ID") ?: ""}\""
+        )
 
         manifestPlaceholders["auth0Domain"] = "${project.findProperty("AUTH0_DOMAIN") ?: ""}"
         manifestPlaceholders["auth0Scheme"] = "demo"
@@ -50,6 +62,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -91,4 +104,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
 
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

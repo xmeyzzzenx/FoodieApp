@@ -1,16 +1,20 @@
 package com.ximena.foodieapp.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "meal_plan")
+@Entity(
+    tableName = "meal_plan_entries",
+    primaryKeys = ["weekKey", "dayOfWeek", "mealType"]
+)
 data class MealPlanEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val dayOfWeek: String,
+    val weekKey: String,
+    val dayOfWeek: Int,
     val mealType: String,
-    val recipeId: Int,
+
+    val isOnline: Boolean,
+    val onlineRecipeId: Int? = null,
+    val localRecipeId: Long? = null,
+
     val title: String,
-    val image: String?,
-    val isOnline: Boolean
+    val image: String?
 )

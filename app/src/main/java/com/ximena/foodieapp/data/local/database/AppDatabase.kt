@@ -15,7 +15,7 @@ import com.ximena.foodieapp.data.local.entity.UserRecipeEntity
         MealPlanEntity::class,
         UserRecipeEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

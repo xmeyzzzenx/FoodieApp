@@ -1,6 +1,7 @@
 package com.ximena.foodieapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -100,11 +101,11 @@ fun AppNavGraph(
 
         composable(Routes.Planner) {
             MealPlannerScreen(
-                onPickOnline = { day, mealType ->
-                    navController.navigate("${Routes.PickOnline}/$day/$mealType")
+                onPickOnline = { dayOfWeek, mealType ->
+                    navController.navigate("${Routes.PickOnline}/$dayOfWeek/$mealType")
                 },
-                onPickLocal = { day, mealType ->
-                    navController.navigate("${Routes.PickLocal}/$day/$mealType")
+                onPickLocal = { dayOfWeek, mealType ->
+                    navController.navigate("${Routes.PickLocal}/$dayOfWeek/$mealType")
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -113,19 +114,23 @@ fun AppNavGraph(
         composable(
             route = "${Routes.PickOnline}/{${Routes.ArgDay}}/{${Routes.ArgMealType}}",
             arguments = listOf(
-                navArgument(Routes.ArgDay) { type = NavType.StringType },
+                navArgument(Routes.ArgDay) { type = NavType.IntType },
                 navArgument(Routes.ArgMealType) { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val day = backStackEntry.arguments?.getString(Routes.ArgDay) ?: "Monday"
+            val dayOfWeek = backStackEntry.arguments?.getInt(Routes.ArgDay) ?: 1
             val mealType = backStackEntry.arguments?.getString(Routes.ArgMealType) ?: "Breakfast"
-            val plannerVm: MealPlannerViewModel = hiltViewModel(navController.getBackStackEntry(Routes.Planner))
+
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Routes.Planner)
+            }
+            val plannerVm: MealPlannerViewModel = hiltViewModel(parentEntry)
 
             PickOnlineScreen(
-                day = day,
+                dayOfWeek = dayOfWeek,
                 mealType = mealType,
                 onPick = { recipeId, title, image ->
-                    plannerVm.setSlotOnline(day, mealType, recipeId, title, image)
+                    plannerVm.setSlotOnline(dayOfWeek, mealType, recipeId, title, image)
                     navController.popBackStack()
                 },
                 onBack = { navController.popBackStack() }
@@ -135,19 +140,23 @@ fun AppNavGraph(
         composable(
             route = "${Routes.PickLocal}/{${Routes.ArgDay}}/{${Routes.ArgMealType}}",
             arguments = listOf(
-                navArgument(Routes.ArgDay) { type = NavType.StringType },
+                navArgument(Routes.ArgDay) { type = NavType.IntType },
                 navArgument(Routes.ArgMealType) { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val day = backStackEntry.arguments?.getString(Routes.ArgDay) ?: "Monday"
+            val dayOfWeek = backStackEntry.arguments?.getInt(Routes.ArgDay) ?: 1
             val mealType = backStackEntry.arguments?.getString(Routes.ArgMealType) ?: "Breakfast"
-            val plannerVm: MealPlannerViewModel = hiltViewModel(navController.getBackStackEntry(Routes.Planner))
+
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Routes.Planner)
+            }
+            val plannerVm: MealPlannerViewModel = hiltViewModel(parentEntry)
 
             PickLocalScreen(
-                day = day,
+                dayOfWeek = dayOfWeek,
                 mealType = mealType,
                 onPick = { localId, title, image ->
-                    plannerVm.setSlotLocal(day, mealType, localId, title, image)
+                    plannerVm.setSlotLocal(dayOfWeek, mealType, localId, title, image)
                     navController.popBackStack()
                 },
                 onBack = { navController.popBackStack() }

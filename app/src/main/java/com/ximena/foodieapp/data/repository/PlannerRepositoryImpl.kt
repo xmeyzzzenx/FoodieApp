@@ -27,13 +27,14 @@ class PlannerRepositoryImpl @Inject constructor(
         favoriteDao.delete(recipeId)
     }
 
-    override fun observeMealPlan(): Flow<List<MealPlanEntity>> = mealPlanDao.observeAll()
+    override fun observeMealPlanWeek(weekKey: String): Flow<List<MealPlanEntity>> =
+        mealPlanDao.observeWeek(weekKey)
 
     override suspend fun saveMealSlot(entity: MealPlanEntity) {
         mealPlanDao.upsert(entity)
     }
 
-    override suspend fun clearMealSlot(day: String, mealType: String) {
-        mealPlanDao.clearSlot(day, mealType)
+    override suspend fun clearMealSlot(weekKey: String, dayOfWeek: Int, mealType: String) {
+        mealPlanDao.clearSlot(weekKey, dayOfWeek, mealType)
     }
 }
