@@ -3,6 +3,7 @@ package com.ximena.foodieapp.ui.screens.myrecipes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,8 +22,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ximena.foodieapp.domain.model.Recipe
 import com.ximena.foodieapp.ui.components.AppTopBar
 import com.ximena.foodieapp.ui.components.EmptyState
+import com.ximena.foodieapp.ui.components.RecipeCard
 import com.ximena.foodieapp.ui.components.SearchField
 
 @Composable
@@ -66,28 +69,30 @@ fun MyRecipesScreen(
                 )
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(bottom = 24.dp)
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(recipes.size) { index ->
                         val item = recipes[index]
 
-                        androidx.compose.material3.Card(
-                            modifier = Modifier.padding(vertical = 6.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(text = item.title)
+                        RecipeCard(
+                            recipe = Recipe(
+                                id = item.localId.toInt(),
+                                title = item.title,
+                                image = item.imageUrl,
+                            ),
+                            onClick = { onEdit(item.localId) }
+                        )
 
-                                androidx.compose.foundation.layout.Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
-                                    IconButton(onClick = { onEdit(item.localId) }) {
-                                        Icon(Icons.Default.Edit, contentDescription = null)
-                                    }
-                                    IconButton(onClick = { viewModel.delete(item.localId) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = null)
-                                    }
-                                }
+                        Row(
+                            modifier = Modifier.padding(start = 8.dp, top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            IconButton(onClick = { onEdit(item.localId) }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Editar")
+                            }
+                            IconButton(onClick = { viewModel.delete(item.localId) }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Borrar")
                             }
                         }
                     }

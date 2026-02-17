@@ -15,8 +15,6 @@ import javax.inject.Inject
 data class RecipeFormState(
     val title: String = "",
     val imageUrl: String = "",
-    val readyInMinutes: String = "",
-    val servings: String = "",
     val ingredientsText: String = "",
     val instructionsText: String = "",
     val error: String? = null,
@@ -32,6 +30,7 @@ class RecipeFormViewModel @Inject constructor(
     val state: StateFlow<RecipeFormState> = _state.asStateFlow()
 
     private var currentLocalId: Long = 0L
+    private var createdAt: Long = 0L
 
     fun load(localId: Long) {
         if (localId <= 0L) return
@@ -39,11 +38,11 @@ class RecipeFormViewModel @Inject constructor(
 
         viewModelScope.launch {
             val entity = userRecipesRepository.getById(localId) ?: return@launch
+            createdAt = entity.createdAt
+
             _state.value = _state.value.copy(
                 title = entity.title,
                 imageUrl = entity.imageUrl.orEmpty(),
-                readyInMinutes = entity.readyInMinutes.toString(),
-                servings = entity.servings.toString(),
                 ingredientsText = entity.ingredientsText,
                 instructionsText = entity.instructionsText,
                 error = null
@@ -53,8 +52,6 @@ class RecipeFormViewModel @Inject constructor(
 
     fun onTitleChange(v: String) = update { copy(title = v) }
     fun onImageUrlChange(v: String) = update { copy(imageUrl = v) }
-    fun onReadyChange(v: String) = update { copy(readyInMinutes = v) }
-    fun onServingsChange(v: String) = update { copy(servings = v) }
     fun onIngredientsChange(v: String) = update { copy(ingredientsText = v) }
     fun onInstructionsChange(v: String) = update { copy(instructionsText = v) }
 
@@ -67,14 +64,6 @@ class RecipeFormViewModel @Inject constructor(
 
         if (!Validators.isNotBlank(s.title)) {
             _state.value = s.copy(error = "El título es obligatorio")
-            return
-        }
-        if (!Validators.isPositiveInt(s.readyInMinutes)) {
-            _state.value = s.copy(error = "Tiempo inválido")
-            return
-        }
-        if (!Validators.isPositiveInt(s.servings)) {
-            _state.value = s.copy(error = "Raciones inválidas")
             return
         }
         if (!Validators.isNotBlank(s.ingredientsText)) {
@@ -94,17 +83,16 @@ class RecipeFormViewModel @Inject constructor(
                 localId = currentLocalId,
                 title = s.title.trim(),
                 imageUrl = s.imageUrl.trim().ifBlank { null },
-                readyInMinutes = s.readyInMinutes.toInt(),
-                servings = s.servings.toInt(),
                 ingredientsText = s.ingredientsText.trim(),
                 instructionsText = s.instructionsText.trim(),
-                createdAt = now,
+                createdAt = if (currentLocalId > 0L) createdAt else now,
                 updatedAt = now
             )
 
             if (currentLocalId <= 0L) {
                 val newId = userRecipesRepository.insert(entity)
                 currentLocalId = newId
+                createdAt = entity.createdAt
             } else {
                 userRecipesRepository.update(entity)
             }

@@ -74,22 +74,6 @@ fun RecipeFormScreen(
                 )
 
                 OutlinedTextField(
-                    value = state.readyInMinutes,
-                    onValueChange = viewModel::onReadyChange,
-                    label = { Text(text = "Tiempo (min)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
-                    value = state.servings,
-                    onValueChange = viewModel::onServingsChange,
-                    label = { Text(text = "Raciones") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-
-                OutlinedTextField(
                     value = state.ingredientsText,
                     onValueChange = viewModel::onIngredientsChange,
                     label = { Text(text = "Ingredientes") },

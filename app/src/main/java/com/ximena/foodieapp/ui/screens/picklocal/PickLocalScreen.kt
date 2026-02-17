@@ -16,9 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ximena.foodieapp.data.local.entity.UserRecipeEntity
+import com.ximena.foodieapp.domain.model.Recipe
 import com.ximena.foodieapp.ui.components.AppTopBar
 import com.ximena.foodieapp.ui.components.EmptyState
+import com.ximena.foodieapp.ui.components.RecipeCard
 import com.ximena.foodieapp.ui.components.SearchField
 
 @Composable
@@ -74,25 +75,20 @@ fun PickLocalScreen(
                 )
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(bottom = 24.dp)
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(recipes.size) { index ->
-                        val item: UserRecipeEntity = recipes[index]
+                        val item = recipes[index]
 
-                        androidx.compose.material3.Card(
-                            modifier = Modifier.padding(vertical = 6.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(text = item.title)
-
-                                androidx.compose.material3.Button(
-                                    onClick = { onPick(item.localId, item.title, item.imageUrl) },
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
-                                    Text(text = "Elegir")
-                                }
-                            }
-                        }
+                        RecipeCard(
+                            recipe = Recipe(
+                                id = item.localId.toInt(),
+                                title = item.title,
+                                image = item.imageUrl
+                            ),
+                            onClick = { onPick(item.localId, item.title, item.imageUrl) }
+                        )
                     }
                 }
             }
