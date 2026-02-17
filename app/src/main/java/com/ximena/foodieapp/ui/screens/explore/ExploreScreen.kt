@@ -11,7 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -54,7 +54,7 @@ fun ExploreScreen(
         topBar = {
             AppTopBar(
                 title = "Explorar",
-                navigationIcon = Icons.Default.Person,
+                navigationIcon = Icons.Default.MenuBook,
                 onNavigationClick = onOpenMyRecipes,
                 actionIcon = Icons.Default.ExitToApp,
                 onActionClick = {
