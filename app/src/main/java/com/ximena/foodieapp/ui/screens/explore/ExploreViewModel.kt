@@ -8,10 +8,13 @@ import com.ximena.foodieapp.domain.repository.AuthRepository
 import com.ximena.foodieapp.domain.repository.RecipesRepository
 import com.ximena.foodieapp.utils.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,15 +43,28 @@ class ExploreViewModel @Inject constructor(
         viewModelScope.launch {
             authRepository.userEmail.collectLatest { _userEmail.value = it }
         }
+
+        // Carga inicial (tu random si query == null)
         loadRecipes(null)
+
+        // 🔥 Búsqueda automática mientras escribes
+        startAutoSearch()
     }
 
     fun onQueryChange(newValue: String) {
         _query.value = newValue
     }
 
-    fun search() {
-        loadRecipes(_query.value.trim().ifBlank { null })
+    @OptIn(FlowPreview::class)
+    private fun startAutoSearch() {
+        viewModelScope.launch {
+            _query
+                .debounce(350) // espera un poquito para no spamear la API
+                .distinctUntilChanged()
+                .collectLatest { q ->
+                    loadRecipes(q.trim().ifBlank { null })
+                }
+        }
     }
 
     fun loadRecipes(query: String?) {

@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -72,6 +71,7 @@ fun ExploreScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
             if (userName.isNotBlank()) {
                 Text(
                     text = "$userName  $userEmail",
@@ -79,15 +79,12 @@ fun ExploreScreen(
                 )
             }
 
+            // ✅ Buscador sin botón
             SearchField(
                 value = query,
                 onValueChange = viewModel::onQueryChange,
                 placeholder = "Buscar recetas"
             )
-
-            Button(onClick = { viewModel.search() }) {
-                Text(text = "Buscar")
-            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedButton(onClick = onOpenFavorites) {
@@ -102,17 +99,28 @@ fun ExploreScreen(
 
             when (state) {
                 is UiState.Idle -> Unit
+
                 is UiState.Loading -> LoadingView()
+
                 is UiState.Error -> ErrorView(message = (state as UiState.Error).message) {
-                    viewModel.loadRecipes(query.ifBlank { null })
+                    viewModel.loadRecipes(query.trim().ifBlank { null })
                 }
+
                 is UiState.Success -> {
                     val recipes = (state as UiState.Success<List<Recipe>>).data
+
                     if (recipes.isEmpty()) {
-                        EmptyState(
-                            title = "Sin resultados",
-                            subtitle = "Prueba otra búsqueda"
-                        )
+                        if (query.isBlank()) {
+                            EmptyState(
+                                title = "Sin recetas",
+                                subtitle = "Escribe algo para buscar"
+                            )
+                        } else {
+                            EmptyState(
+                                title = "Sin resultados",
+                                subtitle = "Prueba otra búsqueda"
+                            )
+                        }
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(bottom = 24.dp),
