@@ -83,8 +83,6 @@ app/
 
 ## 🗄️ Base de datos (Room)
 
-### Entidades
-
 | Tabla | Descripción |
 |---|---|
 | `recipes` | Recetas de la API y recetas propias del usuario |
@@ -159,19 +157,14 @@ AUTH0_DOMAIN=dev-qjujhqmlbgx8725a.eu.auth0.com
 
 Puedes crear una cuenta nueva directamente desde la pantalla de login de Auth0, o usar esta cuenta de prueba:
 
-| Campo | Valor                |
-|---|----------------------|
+| Campo | Valor |
+|---|---|
 | **Email** | prueba@foodieapp.com |
-| **Contraseña** | P@ssword1234         |
+| **Contraseña** | P@ssword1234 |
 
 > La API de TheMealDB es pública y no requiere clave.
 
 ---
-
-## 👩‍💻 Autora
-
-**Ximena Meyzen Calderón**  
-2º DAM — Proyecto Final PMDM + PSP — 2025/2026
 
 ## 📸 Capturas de pantalla
 
@@ -187,3 +180,10 @@ Puedes crear una cuenta nueva directamente desde la pantalla de login de Auth0, 
   <img src="screenshots/compras.png" width="200"/>
   <img src="screenshots/mis_recetas.png" width="200"/>
 </p>
+
+---
+
+## 👩‍💻 Autora
+
+**Ximena Meyzen Calderón**  
+2º DAM — Proyecto Final PMDM + PSP — 2025/2026
