@@ -1,5 +1,3 @@
-// ==================== DATABASE ====================
-
 package com.ximena.foodieapp.data.local.database
 
 import androidx.room.Database
@@ -15,7 +13,7 @@ import com.ximena.foodieapp.data.local.entity.ShoppingItemEntity
 // version sube cada vez que se cambia la estructura de alguna tabla
 @Database(
     entities = [RecipeEntity::class, MealPlanEntity::class, ShoppingItemEntity::class],
-    version = 2,
+    version = 1,
     exportSchema = false
 )
 abstract class FoodieDatabase : RoomDatabase() {

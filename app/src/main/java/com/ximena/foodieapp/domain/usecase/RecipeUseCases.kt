@@ -73,3 +73,9 @@ class DeleteUserRecipeUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(recipe: Recipe) = repository.deleteUserRecipe(recipe)
 }
+
+class UpdateUserRecipeUseCase @Inject constructor(
+    private val repository: RecipeRepository
+) {
+    suspend operator fun invoke(recipe: Recipe) = repository.updateUserRecipe(recipe)
+}
