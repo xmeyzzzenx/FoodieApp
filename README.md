@@ -37,17 +37,17 @@ FoodieApp permite:
 
 ## 📋 Pantallas principales
 
-Pantalla           Funcionalidad
-  ------------------ ---------------------------------------------------
-Login              Autenticación con Auth0
-Home               Categorías y receta del día
-Búsqueda           Buscar recetas por nombre
-Detalle            Ingredientes, instrucciones, favorito, planificar
-Favoritas          Recetas guardadas
-Plan semanal       Organización por día y tipo de comida
-Lista de compras   Ingredientes pendientes y completados
-Mis recetas        CRUD de recetas creadas por el usuario
-Formulario         Crear o editar receta con validación
+| Pantalla | Funcionalidad |
+|----------|---------------|
+| Login | Autenticación con Auth0 |
+| Home | Categorías y receta del día |
+| Búsqueda | Buscar recetas por nombre |
+| Detalle | Ingredientes, instrucciones, favorito, planificar |
+| Favoritas | Recetas guardadas |
+| Plan semanal | Organización por día y tipo de comida |
+| Lista de compras | Ingredientes pendientes y completados |
+| Mis recetas | CRUD de recetas creadas por el usuario |
+| Formulario | Crear o editar receta con validación |
 
 ------------------------------------------------------------------------
 
