@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -19,7 +20,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        manifestPlaceholders["auth0Domain"] = "dev-qjujhqmlbgx8725a.eu.auth0.com"
+        val localProperties = gradleLocalProperties(rootDir, providers)
+
+        buildConfigField("String", "AUTH0_CLIENT_ID", "\"${localProperties.getProperty("AUTH0_CLIENT_ID")}\"")
+        buildConfigField("String", "AUTH0_DOMAIN", "\"${localProperties.getProperty("AUTH0_DOMAIN")}\"")
+
+        manifestPlaceholders["auth0Domain"] = localProperties.getProperty("AUTH0_DOMAIN") ?: ""
         manifestPlaceholders["auth0Scheme"] = "com.ximena.foodieapp"
     }
 
@@ -32,6 +38,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
