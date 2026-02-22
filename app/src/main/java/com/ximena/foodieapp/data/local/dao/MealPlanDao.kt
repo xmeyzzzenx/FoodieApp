@@ -1,34 +1,17 @@
 package com.ximena.foodieapp.data.local.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import com.ximena.foodieapp.data.local.entity.MealPlanEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MealPlanDao {
+    @Query("SELECT * FROM meal_plans WHERE weekYear = :weekYear ORDER BY dayOfWeek, mealType")
+    fun getMealPlanForWeek(weekYear: String): Flow<List<MealPlanEntity>>
 
-    // Observa SOLO la semana seleccionada
-    @Query("""
-        SELECT * FROM meal_plan_entries
-        WHERE weekKey = :weekKey
-        ORDER BY dayOfWeek ASC, mealType ASC
-    """)
-    fun observeWeek(weekKey: String): Flow<List<MealPlanEntity>>
-
-    // REPLACE reemplaza el slot correctamente
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(entity: MealPlanEntity)
+    suspend fun insertMealPlan(mealPlan: MealPlanEntity)
 
-    @Query("""
-        DELETE FROM meal_plan_entries
-        WHERE weekKey = :weekKey AND dayOfWeek = :day AND mealType = :mealType
-    """)
-    suspend fun clearSlot(weekKey: String, day: Int, mealType: String)
-
-    // Opcional pero útil: limpiar toda la semana de golpe
-    @Query("DELETE FROM meal_plan_entries WHERE weekKey = :weekKey")
-    suspend fun clearWeek(weekKey: String)
+    @Query("DELETE FROM meal_plans WHERE id = :id")
+    suspend fun deleteMealPlanById(id: Int)
 }
