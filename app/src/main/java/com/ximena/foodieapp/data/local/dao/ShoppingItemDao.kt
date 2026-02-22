@@ -6,8 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ShoppingItemDao {
-    @Query("SELECT * FROM shopping_items ORDER BY isChecked ASC, name ASC")
-    fun getAllShoppingItems(): Flow<List<ShoppingItemEntity>>
+
+    @Query("SELECT * FROM shopping_items WHERE userId = :userId ORDER BY isChecked ASC, name ASC")
+    fun getAllShoppingItems(userId: String): Flow<List<ShoppingItemEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: ShoppingItemEntity)
@@ -21,12 +22,12 @@ interface ShoppingItemDao {
     @Delete
     suspend fun deleteItem(item: ShoppingItemEntity)
 
-    @Query("DELETE FROM shopping_items WHERE isChecked = 1")
-    suspend fun deleteCheckedItems()
+    @Query("DELETE FROM shopping_items WHERE isChecked = 1 AND userId = :userId")
+    suspend fun deleteCheckedItems(userId: String)
 
-    @Query("DELETE FROM shopping_items")
-    suspend fun deleteAllItems()
+    @Query("DELETE FROM shopping_items WHERE userId = :userId")
+    suspend fun deleteAllItems(userId: String)
 
-    @Query("UPDATE shopping_items SET isChecked = :checked WHERE id = :id")
-    suspend fun updateCheckedStatus(id: Int, checked: Boolean)
+    @Query("UPDATE shopping_items SET isChecked = :checked WHERE id = :id AND userId = :userId")
+    suspend fun updateCheckedStatus(userId: String, id: Int, checked: Boolean)
 }

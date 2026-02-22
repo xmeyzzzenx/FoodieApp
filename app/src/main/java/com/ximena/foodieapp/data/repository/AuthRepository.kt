@@ -22,40 +22,37 @@ class AuthRepository @Inject constructor(
     private var cachedCredentials: Credentials? = null
     private var cachedUserInfo: UserInfo? = null
 
-    // 🔑 IMPORTANTE: debe coincidir con applicationId y con auth0Scheme del manifest
     private val authScheme = "com.ximena.foodieapp"
 
     fun isLoggedIn(): Boolean = cachedCredentials != null
 
     fun getCachedUserInfo(): UserInfo? = cachedUserInfo
 
+    // ✅ userId único por usuario Auth0 (sub del token)
+    fun getCurrentUserId(): String = cachedUserInfo?.userId ?: "anonymous"
+
     suspend fun login(activity: Activity): Result<UserInfo> {
         return try {
             val credentials = suspendCancellableCoroutine { continuation ->
                 WebAuthProvider.login(auth0)
-                    .withScheme(authScheme) // ✅ AQUÍ
-                    .withScope("openid profile email") // ✅
+                    .withScheme(authScheme)
+                    .withScope("openid profile email")
                     .start(activity, object : Callback<Credentials, AuthenticationException> {
                         override fun onSuccess(result: Credentials) {
                             if (continuation.isActive) continuation.resume(result)
                         }
-
                         override fun onFailure(error: AuthenticationException) {
                             if (continuation.isActive) continuation.resumeWithException(error)
                         }
                     })
             }
-
             cachedCredentials = credentials
-
-            // accessToken puede venir null en algunos flujos; lo controlamos
             val accessToken = credentials.accessToken
             val userInfo = if (!accessToken.isNullOrBlank()) {
                 fetchUserProfile(accessToken)
             } else {
-                UserInfo("Usuario", "", null)
+                UserInfo("Usuario", "", null, "anonymous")
             }
-
             cachedUserInfo = userInfo
             Result.success(userInfo)
         } catch (e: Exception) {
@@ -67,19 +64,16 @@ class AuthRepository @Inject constructor(
         return try {
             suspendCancellableCoroutine { continuation ->
                 WebAuthProvider.logout(auth0)
-                    .withScheme(authScheme) // ✅ AQUÍ
+                    .withScheme(authScheme)
                     .start(activity, object : Callback<Void?, AuthenticationException> {
                         override fun onSuccess(result: Void?) {
                             if (continuation.isActive) continuation.resume(Unit)
                         }
-
                         override fun onFailure(error: AuthenticationException) {
-                            // Tu enfoque: no romper aunque falle el logout remoto
                             if (continuation.isActive) continuation.resume(Unit)
                         }
                     })
             }
-
             cachedCredentials = null
             cachedUserInfo = null
             Result.success(Unit)
@@ -98,22 +92,22 @@ class AuthRepository @Inject constructor(
                     .start(object : Callback<UserProfile, AuthenticationException> {
                         override fun onSuccess(result: UserProfile) {
                             val userInfo = UserInfo(
+                                userId = result.getId() ?: accessToken.take(20),
                                 name = result.name ?: result.nickname ?: "Usuario",
                                 email = result.email ?: "",
                                 pictureUrl = result.pictureURL?.toString()
                             )
                             if (continuation.isActive) continuation.resume(userInfo)
                         }
-
                         override fun onFailure(error: AuthenticationException) {
                             if (continuation.isActive) continuation.resume(
-                                UserInfo("Usuario", "", null)
+                                UserInfo("Usuario", "", null, accessToken.take(20))
                             )
                         }
                     })
             }
         } catch (e: Exception) {
-            UserInfo("Usuario", "", null)
+            UserInfo("Usuario", "", null, "anonymous")
         }
     }
 }

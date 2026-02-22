@@ -11,7 +11,7 @@ import com.ximena.foodieapp.data.local.entity.ShoppingItemEntity
 
 @Database(
     entities = [RecipeEntity::class, MealPlanEntity::class, ShoppingItemEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class FoodieDatabase : RoomDatabase() {

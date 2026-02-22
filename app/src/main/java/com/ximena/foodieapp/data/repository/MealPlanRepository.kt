@@ -18,37 +18,40 @@ import javax.inject.Singleton
 @Singleton
 class MealPlanRepository @Inject constructor(
     private val mealPlanDao: MealPlanDao,
-    private val shoppingItemDao: ShoppingItemDao
+    private val shoppingItemDao: ShoppingItemDao,
+    private val authRepository: AuthRepository
 ) {
+    private val userId get() = authRepository.getCurrentUserId()
+
     fun getMealPlanForWeek(weekYear: String): Flow<List<MealPlan>> =
-        mealPlanDao.getMealPlanForWeek(weekYear).map { it.map { e -> e.toMealPlan() } }
+        mealPlanDao.getMealPlanForWeek(userId, weekYear).map { it.map { e -> e.toMealPlan() } }
 
     suspend fun addMealPlan(mealPlan: MealPlan) =
-        mealPlanDao.insertMealPlan(mealPlan.toEntity())
+        mealPlanDao.insertMealPlan(mealPlan.toEntity(userId))
 
     suspend fun removeMealPlan(id: Int) =
-        mealPlanDao.deleteMealPlanById(id)
+        mealPlanDao.deleteMealPlanById(userId, id)
 
     fun getAllShoppingItems(): Flow<List<ShoppingItem>> =
-        shoppingItemDao.getAllShoppingItems().map { it.map { e -> e.toShoppingItem() } }
+        shoppingItemDao.getAllShoppingItems(userId).map { it.map { e -> e.toShoppingItem() } }
 
     suspend fun addShoppingItem(item: ShoppingItem) =
-        shoppingItemDao.insertItem(item.toEntity())
+        shoppingItemDao.insertItem(item.toEntity(userId))
 
     suspend fun addShoppingItems(items: List<ShoppingItem>) =
-        shoppingItemDao.insertItems(items.map { it.toEntity() })
+        shoppingItemDao.insertItems(items.map { it.toEntity(userId) })
 
     suspend fun toggleShoppingItem(id: Int, checked: Boolean) =
-        shoppingItemDao.updateCheckedStatus(id, checked)
+        shoppingItemDao.updateCheckedStatus(userId, id, checked)
 
     suspend fun deleteShoppingItem(item: ShoppingItem) =
-        shoppingItemDao.deleteItem(item.toEntity())
+        shoppingItemDao.deleteItem(item.toEntity(userId))
 
     suspend fun clearCheckedItems() =
-        shoppingItemDao.deleteCheckedItems()
+        shoppingItemDao.deleteCheckedItems(userId)
 
     suspend fun clearAllShoppingItems() =
-        shoppingItemDao.deleteAllItems()
+        shoppingItemDao.deleteAllItems(userId)
 
     fun getCurrentWeekYear(): String {
         val sdf = SimpleDateFormat("yyyy-'W'ww", Locale.getDefault())

@@ -18,16 +18,19 @@ import javax.inject.Singleton
 @Singleton
 class RecipeRepository @Inject constructor(
     private val apiService: MealDbApiService,
-    private val recipeDao: RecipeDao
+    private val recipeDao: RecipeDao,
+    private val authRepository: AuthRepository
 ) {
+    private val userId get() = authRepository.getCurrentUserId()
+
     fun getFavoriteRecipes(): Flow<List<Recipe>> =
-        recipeDao.getFavoriteRecipes().map { it.map { e -> e.toRecipe() } }
+        recipeDao.getFavoriteRecipes(userId).map { it.map { e -> e.toRecipe() } }
 
     fun getUserRecipes(): Flow<List<Recipe>> =
-        recipeDao.getUserRecipes().map { it.map { e -> e.toRecipe() } }
+        recipeDao.getUserRecipes(userId).map { it.map { e -> e.toRecipe() } }
 
     fun searchLocalRecipes(query: String): Flow<List<Recipe>> =
-        recipeDao.searchRecipes(query).map { it.map { e -> e.toRecipe() } }
+        recipeDao.searchRecipes(userId, query).map { it.map { e -> e.toRecipe() } }
 
     suspend fun searchMealsByName(name: String): Result<List<MealSummary>> = runCatching {
         apiService.searchMealsByName(name).meals?.map { it.toMealSummary() } ?: emptyList()
@@ -42,11 +45,11 @@ class RecipeRepository @Inject constructor(
     }
 
     suspend fun getRecipeDetail(id: String): Result<Recipe> = runCatching {
-        val local = recipeDao.getRecipeById(id)
+        val local = recipeDao.getRecipeById(userId, id)
         if (local != null) return Result.success(local.toRecipe())
         val meal = apiService.getMealById(id).meals?.firstOrNull()
             ?: error("Receta no encontrada")
-        recipeDao.insertRecipe(meal.toRecipeEntity())
+        recipeDao.insertRecipe(meal.toRecipeEntity(userId = userId))
         meal.toRecipe()
     }
 
@@ -57,23 +60,23 @@ class RecipeRepository @Inject constructor(
     }
 
     suspend fun toggleFavorite(recipe: Recipe) {
-        val existing = recipeDao.getRecipeById(recipe.id)
+        val existing = recipeDao.getRecipeById(userId, recipe.id)
         if (existing != null) {
-            recipeDao.updateFavoriteStatus(recipe.id, !existing.isFavorite)
+            recipeDao.updateFavoriteStatus(userId, recipe.id, !existing.isFavorite)
         } else {
-            recipeDao.insertRecipe(recipe.copy(isFavorite = true).toEntity())
+            recipeDao.insertRecipe(recipe.copy(isFavorite = true).toEntity(userId))
         }
     }
 
     suspend fun saveUserRecipe(recipe: Recipe) {
-        recipeDao.insertRecipe(recipe.copy(isUserCreated = true).toEntity())
+        recipeDao.insertRecipe(recipe.copy(isUserCreated = true).toEntity(userId))
     }
 
     suspend fun deleteUserRecipe(recipe: Recipe) {
-        recipeDao.getRecipeById(recipe.id)?.let { recipeDao.deleteRecipe(it) }
+        recipeDao.getRecipeById(userId, recipe.id)?.let { recipeDao.deleteRecipe(it) }
     }
 
     suspend fun updateUserRecipe(recipe: Recipe) {
-        recipeDao.updateRecipe(recipe.toEntity())
+        recipeDao.updateRecipe(recipe.toEntity(userId))
     }
 }

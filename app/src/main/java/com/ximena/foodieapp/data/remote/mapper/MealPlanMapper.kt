@@ -17,8 +17,9 @@ fun MealPlanEntity.toMealPlan() = MealPlan(
     weekYear = weekYear
 )
 
-fun MealPlan.toEntity() = MealPlanEntity(
+fun MealPlan.toEntity(userId: String) = MealPlanEntity(
     id = id,
+    userId = userId,
     recipeId = recipeId,
     recipeName = recipeName,
     recipeThumbnail = recipeThumbnail,
@@ -36,8 +37,9 @@ fun ShoppingItemEntity.toShoppingItem() = ShoppingItem(
     recipeName = recipeName
 )
 
-fun ShoppingItem.toEntity() = ShoppingItemEntity(
+fun ShoppingItem.toEntity(userId: String) = ShoppingItemEntity(
     id = id,
+    userId = userId,
     name = name,
     measure = measure,
     isChecked = isChecked,

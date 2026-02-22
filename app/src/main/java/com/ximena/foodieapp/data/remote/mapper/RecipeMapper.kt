@@ -39,11 +39,12 @@ fun MealDetailDto.toRecipe(isFavorite: Boolean = false): Recipe {
     )
 }
 
-fun MealDetailDto.toRecipeEntity(isFavorite: Boolean = false): RecipeEntity {
+fun MealDetailDto.toRecipeEntity(userId: String, isFavorite: Boolean = false): RecipeEntity {
     val ingredients = getIngredientsList()
     val measures = getMeasuresList()
     return RecipeEntity(
         id = idMeal,
+        userId = userId,
         name = strMeal,
         category = strCategory,
         area = strArea,
@@ -72,8 +73,9 @@ fun RecipeEntity.toRecipe() = Recipe(
     isUserCreated = isUserCreated
 )
 
-fun Recipe.toEntity() = RecipeEntity(
+fun Recipe.toEntity(userId: String) = RecipeEntity(
     id = id,
+    userId = userId,
     name = name,
     category = category,
     area = area,
