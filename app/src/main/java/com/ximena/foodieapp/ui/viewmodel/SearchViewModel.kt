@@ -22,6 +22,7 @@ class SearchViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    // null = pantalla vacía (sin búsqueda activa)
     private val _searchResults = MutableStateFlow<UiState<List<MealSummary>>?>(null)
     val searchResults: StateFlow<UiState<List<MealSummary>>?> = _searchResults.asStateFlow()
 
@@ -29,10 +30,10 @@ class SearchViewModel @Inject constructor(
 
     fun onQueryChange(query: String) {
         _searchQuery.value = query
-        searchJob?.cancel()
+        searchJob?.cancel() // Cancela la búsqueda anterior si el usuario sigue escribiendo
         if (query.isBlank()) { _searchResults.value = null; return }
         searchJob = viewModelScope.launch {
-            delay(500)
+            delay(500) // Espera 500ms antes de buscar (debounce, evita llamadas por cada letra)
             _searchResults.value = UiState.Loading
             searchMealsUseCase(query).fold(
                 onSuccess = { _searchResults.value = UiState.Success(it) },

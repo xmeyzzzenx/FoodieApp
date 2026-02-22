@@ -2,24 +2,32 @@ package com.ximena.foodieapp.data.remote.dto
 
 import com.google.gson.annotations.SerializedName
 
+// DTOs = clases que modelan exactamente lo que devuelve la API (JSON → objeto Kotlin)
+// @SerializedName mapea el nombre del campo JSON al nombre de la variable
+
+// Respuesta de la API cuando devuelve una lista de recetas resumidas
 data class MealListResponse(
     @SerializedName("meals") val meals: List<MealDto>?
 )
 
+// Respuesta cuando devuelve el detalle completo de una receta
 data class MealDetailResponse(
     @SerializedName("meals") val meals: List<MealDetailDto>?
 )
 
+// Respuesta cuando devuelve las categorías
 data class CategoryListResponse(
     @SerializedName("categories") val categories: List<CategoryDto>?
 )
 
+// Receta resumida: solo ID, nombre y foto (para listas)
 data class MealDto(
     @SerializedName("idMeal") val idMeal: String,
     @SerializedName("strMeal") val strMeal: String,
     @SerializedName("strMealThumb") val strMealThumb: String
 )
 
+// Categoría con ID, nombre, foto y descripción
 data class CategoryDto(
     @SerializedName("idCategory") val idCategory: String,
     @SerializedName("strCategory") val strCategory: String,
@@ -27,6 +35,8 @@ data class CategoryDto(
     @SerializedName("strCategoryDescription") val strCategoryDescription: String
 )
 
+// Receta completa: la API manda ingredientes y cantidades como campos separados (hasta 20)
+// en vez de una lista, por eso hay strIngredient1, strIngredient2...
 data class MealDetailDto(
     @SerializedName("idMeal") val idMeal: String,
     @SerializedName("strMeal") val strMeal: String,
@@ -77,6 +87,7 @@ data class MealDetailDto(
     @SerializedName("strMeasure19") val strMeasure19: String?,
     @SerializedName("strMeasure20") val strMeasure20: String?
 ) {
+    // Junta los 20 campos sueltos en una lista, filtrando los que vienen vacíos o nulos
     fun getIngredientsList(): List<String> = listOf(
         strIngredient1, strIngredient2, strIngredient3, strIngredient4, strIngredient5,
         strIngredient6, strIngredient7, strIngredient8, strIngredient9, strIngredient10,
@@ -84,6 +95,7 @@ data class MealDetailDto(
         strIngredient16, strIngredient17, strIngredient18, strIngredient19, strIngredient20
     ).filterNot { it.isNullOrBlank() }.map { it!! }
 
+    // Igual pero con cantidades, solo coge tantas como ingredientes haya
     fun getMeasuresList(): List<String> = listOf(
         strMeasure1, strMeasure2, strMeasure3, strMeasure4, strMeasure5,
         strMeasure6, strMeasure7, strMeasure8, strMeasure9, strMeasure10,

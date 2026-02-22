@@ -18,6 +18,7 @@ class MyRecipesViewModel @Inject constructor(
     private val deleteUserRecipeUseCase: DeleteUserRecipeUseCase
 ) : ViewModel() {
 
+    // Recetas creadas por el usuario, en tiempo real desde Room
     val myRecipes: StateFlow<List<Recipe>> = getUserRecipesUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

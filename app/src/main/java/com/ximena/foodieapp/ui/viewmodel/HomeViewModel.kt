@@ -34,6 +34,7 @@ class HomeViewModel @Inject constructor(
     private val _mealsState = MutableStateFlow<UiState<List<MealSummary>>>(UiState.Loading)
     val mealsState: StateFlow<UiState<List<MealSummary>>> = _mealsState.asStateFlow()
 
+    // null = todavía no se ha pedido la receta del día
     private val _randomMealState = MutableStateFlow<UiState<Recipe>?>(null)
     val randomMealState: StateFlow<UiState<Recipe>?> = _randomMealState.asStateFlow()
 
@@ -42,12 +43,14 @@ class HomeViewModel @Inject constructor(
         loadRandomMeal()
     }
 
+    // Devuelve un mensaje de error legible según el tipo de excepción
     private fun errorMessage(error: Throwable, contexto: String): String = when (error) {
         is UnknownHostException -> "Sin conexión a internet. Comprueba tu red."
         is IOException -> "Error de red. Inténtalo de nuevo."
         else -> "Error al cargar $contexto. Inténtalo de nuevo."
     }
 
+    // Carga las categorías y selecciona la primera automáticamente
     private fun loadCategories() {
         viewModelScope.launch {
             _categoriesState.value = UiState.Loading
@@ -63,19 +66,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // Cambia la categoría seleccionada y carga sus recetas
     fun selectCategory(category: String) {
         _selectedCategory.value = category
         viewModelScope.launch {
             _mealsState.value = UiState.Loading
             getMealsByCategoryUseCase(category).fold(
                 onSuccess = { _mealsState.value = UiState.Success(it) },
-                onFailure = {
-                    _mealsState.value = UiState.Error(errorMessage(it, "las recetas"))
-                }
+                onFailure = { _mealsState.value = UiState.Error(errorMessage(it, "las recetas")) }
             )
         }
     }
 
+    // Carga la receta del día en silencio (sin mostrar error si falla)
     private fun loadRandomMeal() {
         viewModelScope.launch {
             getRandomMealUseCase().fold(
@@ -85,14 +88,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // Recarga la receta del día mostrando estado de carga
     fun refreshRandom() {
         viewModelScope.launch {
             _randomMealState.value = UiState.Loading
             getRandomMealUseCase().fold(
                 onSuccess = { _randomMealState.value = UiState.Success(it) },
-                onFailure = {
-                    _randomMealState.value = UiState.Error(errorMessage(it, "la receta del día"))
-                }
+                onFailure = { _randomMealState.value = UiState.Error(errorMessage(it, "la receta del día")) }
             )
         }
     }

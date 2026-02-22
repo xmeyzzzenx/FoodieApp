@@ -32,6 +32,7 @@ fun SearchScreen(
         topBar = {
             TopAppBar(
                 title = {
+                    // Campo de búsqueda en la barra superior
                     TextField(
                         value = searchQuery,
                         onValueChange = { viewModel.onQueryChange(it) },
@@ -41,6 +42,7 @@ fun SearchScreen(
                             focusedContainerColor = MaterialTheme.colorScheme.surface,
                             unfocusedContainerColor = MaterialTheme.colorScheme.surface
                         ),
+                        // Botón para borrar el texto
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.onQueryChange("") }) {
@@ -51,52 +53,37 @@ fun SearchScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
-                    }
-                }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } }
             )
         }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when {
+                // Sin texto: pantalla de bienvenida
                 searchQuery.isBlank() -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("🔍", style = MaterialTheme.typography.displayMedium)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Busca recetas por nombre")
-                        Text(
-                            "Ej: pasta, chicken, soup...",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
+                        Text("Ej: pasta, chicken, soup...", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 }
-                searchResults is UiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                searchResults is UiState.Error -> {
-                    Text(
-                        text = "Error: ${(searchResults as UiState.Error).message}",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center).padding(16.dp)
-                    )
-                }
+                // Buscando (hay debounce de 500ms en el ViewModel)
+                searchResults is UiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                searchResults is UiState.Error -> Text(
+                    text = "Error: ${(searchResults as UiState.Error).message}",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                )
                 searchResults is UiState.Success -> {
                     val meals = (searchResults as UiState.Success).data
                     if (meals.isEmpty()) {
-                        Column(
-                            modifier = Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("😕", style = MaterialTheme.typography.displayMedium)
                             Text("Sin resultados para \"$searchQuery\"")
                         }
                     } else {
+                        // Grid de 2 columnas con los resultados
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
                             contentPadding = PaddingValues(16.dp),

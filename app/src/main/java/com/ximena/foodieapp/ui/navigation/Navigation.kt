@@ -13,6 +13,7 @@ import androidx.navigation.navArgument
 import com.ximena.foodieapp.ui.screens.*
 import com.ximena.foodieapp.ui.viewmodel.AuthViewModel
 
+// Rutas de la app: cada objeto es una pantalla con su ruta de navegación
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Home : Screen("home")
@@ -21,10 +22,12 @@ sealed class Screen(val route: String) {
     object MealPlan : Screen("meal_plan")
     object MyRecipes : Screen("my_recipes")
     object ShoppingList : Screen("shopping_list")
+    // RecipeForm acepta recipeId opcional (null = nueva, con valor = editar)
     object RecipeForm : Screen("recipe_form?recipeId={recipeId}") {
         fun createRoute(recipeId: String? = null) =
             if (recipeId != null) "recipe_form?recipeId=$recipeId" else "recipe_form"
     }
+    // RecipeDetail requiere mealId obligatorio en la ruta
     object RecipeDetail : Screen("recipe_detail/{mealId}") {
         fun createRoute(mealId: String) = "recipe_detail/$mealId"
     }
@@ -35,6 +38,7 @@ fun FoodieNavHost(navController: NavHostController = rememberNavController()) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val isLoggedIn by authViewModel.isLoggedIn.collectAsStateWithLifecycle()
 
+    // Arranca en Home si ya hay sesión, o en Login si no
     NavHost(
         navController = navController,
         startDestination = if (isLoggedIn) Screen.Home.route else Screen.Login.route
@@ -42,6 +46,7 @@ fun FoodieNavHost(navController: NavHostController = rememberNavController()) {
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
+                    // popUpTo con inclusive = true elimina Login del backstack (no se puede volver)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -58,6 +63,7 @@ fun FoodieNavHost(navController: NavHostController = rememberNavController()) {
                 onNavigateToMyRecipes = { navController.navigate(Screen.MyRecipes.route) },
                 onNavigateToShopping = { navController.navigate(Screen.ShoppingList.route) },
                 onLogout = {
+                    // popUpTo(0) limpia todo el backstack, no queda nada atrás
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -95,6 +101,7 @@ fun FoodieNavHost(navController: NavHostController = rememberNavController()) {
             )
         }
 
+        // RecipeForm: recipeId es nullable y opcional en la URL
         composable(
             route = Screen.RecipeForm.route,
             arguments = listOf(navArgument("recipeId") {
@@ -112,6 +119,7 @@ fun FoodieNavHost(navController: NavHostController = rememberNavController()) {
             ShoppingListScreen(onBack = { navController.popBackStack() })
         }
 
+        // RecipeDetail: mealId obligatorio, si no viene se cancela la navegación
         composable(
             route = Screen.RecipeDetail.route,
             arguments = listOf(navArgument("mealId") { type = NavType.StringType })

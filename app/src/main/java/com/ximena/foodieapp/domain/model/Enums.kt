@@ -1,5 +1,6 @@
 package com.ximena.foodieapp.domain.model
 
+// Enum de días de la semana con su nombre en español para mostrar en la UI
 enum class DayOfWeek {
     MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY;
 
@@ -14,6 +15,7 @@ enum class DayOfWeek {
     }
 }
 
+// Enum de tipos de comida con su nombre en español
 enum class MealType {
     BREAKFAST, LUNCH, DINNER;
 

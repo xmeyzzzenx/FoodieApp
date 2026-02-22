@@ -26,46 +26,42 @@ fun LoginScreen(
     val context = LocalContext.current
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
 
+    // Navega a Home en cuanto el login tiene éxito
     LaunchedEffect(loginState) {
         if (loginState is UiState.Success) {
             onLoginSuccess()
         }
     }
 
+    // Mientras carga muestra pantalla de carga y no renderiza nada más
     if (loginState is UiState.Loading) {
         LoadingScreen()
         return
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Text(text = "🍽️", fontSize = 80.sp)
-
         Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = "FoodieApp",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = "Descubre recetas, planifica tus comidas y organiza tu lista de compras",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
-
         Spacer(modifier = Modifier.height(48.dp))
 
+        // Muestra el error si el login falla (ej: canceló el navegador)
         if (loginState is UiState.Error) {
             Text(
                 text = (loginState as UiState.Error).message,
@@ -75,25 +71,18 @@ fun LoginScreen(
             )
         }
 
+        // Botón que abre el navegador de Auth0
         Button(
             onClick = {
                 val activity = context as? Activity ?: return@Button
                 viewModel.login(activity)
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(
-                text = "Iniciar sesión con Auth0",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text("Iniciar sesión", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = "Inicio de sesión seguro con Auth0",
             style = MaterialTheme.typography.bodySmall,

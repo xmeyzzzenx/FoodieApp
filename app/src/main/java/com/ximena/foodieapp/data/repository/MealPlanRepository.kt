@@ -15,14 +15,18 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
+// Repositorio del planificador y lista de la compra
+// Es el único punto de acceso a estos datos (no se toca el DAO desde fuera)
 @Singleton
 class MealPlanRepository @Inject constructor(
     private val mealPlanDao: MealPlanDao,
     private val shoppingItemDao: ShoppingItemDao,
     private val authRepository: AuthRepository
 ) {
+    // userId se recalcula cada vez por si cambia la sesión
     private val userId get() = authRepository.getCurrentUserId()
 
+    // Devuelve el plan de la semana indicada, convirtiendo las entities a modelos
     fun getMealPlanForWeek(weekYear: String): Flow<List<MealPlan>> =
         mealPlanDao.getMealPlanForWeek(userId, weekYear).map { it.map { e -> e.toMealPlan() } }
 
@@ -38,6 +42,7 @@ class MealPlanRepository @Inject constructor(
     suspend fun addShoppingItem(item: ShoppingItem) =
         shoppingItemDao.insertItem(item.toEntity(userId))
 
+    // Añade todos los ingredientes de una receta de golpe
     suspend fun addShoppingItems(items: List<ShoppingItem>) =
         shoppingItemDao.insertItems(items.map { it.toEntity(userId) })
 
@@ -53,6 +58,7 @@ class MealPlanRepository @Inject constructor(
     suspend fun clearAllShoppingItems() =
         shoppingItemDao.deleteAllItems(userId)
 
+    // Devuelve la semana actual en formato "2024-W10" para filtrar el plan
     fun getCurrentWeekYear(): String {
         val sdf = SimpleDateFormat("yyyy-'W'ww", Locale.getDefault())
         return sdf.format(Calendar.getInstance().time)

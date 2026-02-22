@@ -24,9 +24,11 @@ class ShoppingListViewModel @Inject constructor(
     private val clearCheckedItemsUseCase: ClearCheckedItemsUseCase
 ) : ViewModel() {
 
+    // Lista de la compra en tiempo real desde Room
     val shoppingItems: StateFlow<List<ShoppingItem>> = getShoppingItemsUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Marca o desmarca un item como comprado
     fun toggleItem(id: Int, checked: Boolean) {
         viewModelScope.launch { toggleShoppingItemUseCase(id, checked) }
     }
@@ -35,10 +37,12 @@ class ShoppingListViewModel @Inject constructor(
         viewModelScope.launch { deleteShoppingItemUseCase(item) }
     }
 
+    // Borra solo los ya marcados
     fun clearChecked() {
         viewModelScope.launch { clearCheckedItemsUseCase() }
     }
 
+    // Añade un item a mano (si el nombre está vacío no hace nada)
     fun addItem(name: String, measure: String) {
         if (name.isBlank()) return
         viewModelScope.launch { addShoppingItemsUseCase(ShoppingItem(name = name, measure = measure)) }

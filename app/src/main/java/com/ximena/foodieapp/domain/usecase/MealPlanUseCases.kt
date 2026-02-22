@@ -6,6 +6,8 @@ import com.ximena.foodieapp.domain.model.ShoppingItem
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+// Casos de uso del planificador y lista de la compra
+
 class GetMealPlanUseCase @Inject constructor(
     private val repository: MealPlanRepository
 ) {
@@ -31,6 +33,7 @@ class GetShoppingItemsUseCase @Inject constructor(
     operator fun invoke(): Flow<List<ShoppingItem>> = repository.getAllShoppingItems()
 }
 
+// Sobrecarga: acepta un item solo o una lista entera
 class AddShoppingItemsUseCase @Inject constructor(
     private val repository: MealPlanRepository
 ) {
@@ -38,6 +41,7 @@ class AddShoppingItemsUseCase @Inject constructor(
     suspend operator fun invoke(item: ShoppingItem) = repository.addShoppingItem(item)
 }
 
+// Marca o desmarca un item como comprado
 class ToggleShoppingItemUseCase @Inject constructor(
     private val repository: MealPlanRepository
 ) {
@@ -51,6 +55,7 @@ class DeleteShoppingItemUseCase @Inject constructor(
     suspend operator fun invoke(item: ShoppingItem) = repository.deleteShoppingItem(item)
 }
 
+// Borra solo los items ya marcados como comprados
 class ClearCheckedItemsUseCase @Inject constructor(
     private val repository: MealPlanRepository
 ) {

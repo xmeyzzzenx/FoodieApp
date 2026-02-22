@@ -67,6 +67,7 @@ fun MyRecipesScreen(
             ) {
                 items(myRecipes, key = { it.id }) { recipe ->
                     RecipeDetailCard(recipe = recipe, onClick = { onRecipeClick(recipe.id) })
+                    // Botones de editar y borrar debajo de cada receta
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         horizontalArrangement = Arrangement.End
@@ -91,14 +92,16 @@ fun MyRecipesScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeFormScreen(
-    recipeId: String?,
+    recipeId: String?,    // null = nueva receta, con valor = editar existente
     onBack: () -> Unit,
     onSaved: () -> Unit,
     viewModel: RecipeFormViewModel = hiltViewModel()
 ) {
     val formState by viewModel.formState.collectAsStateWithLifecycle()
 
+    // Si viene con id, carga la receta a editar
     LaunchedEffect(recipeId) { recipeId?.let { viewModel.loadRecipeForEdit(it) } }
+    // Navega atrás automáticamente cuando se guarda bien
     LaunchedEffect(formState.savedSuccessfully) { if (formState.savedSuccessfully) onSaved() }
 
     Scaffold(
@@ -121,12 +124,10 @@ fun RecipeFormScreen(
         }
     ) { padding ->
         Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
+            modifier = Modifier.padding(padding).padding(16.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Campo obligatorio: muestra error si está vacío al guardar
             OutlinedTextField(
                 value = formState.name,
                 onValueChange = { viewModel.onNameChange(it) },
@@ -136,43 +137,13 @@ fun RecipeFormScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
-            OutlinedTextField(
-                value = formState.category,
-                onValueChange = { viewModel.onCategoryChange(it) },
-                label = { Text("Categoría") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            OutlinedTextField(
-                value = formState.area,
-                onValueChange = { viewModel.onAreaChange(it) },
-                label = { Text("Origen/Cocina") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            OutlinedTextField(
-                value = formState.thumbnailUrl,
-                onValueChange = { viewModel.onThumbnailUrlChange(it) },
-                label = { Text("URL de imagen (opcional)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            OutlinedTextField(
-                value = formState.ingredientsText,
-                onValueChange = { viewModel.onIngredientsChange(it) },
-                label = { Text("Ingredientes (separados por coma)") },
-                placeholder = { Text("harina, huevos, leche") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2
-            )
-            OutlinedTextField(
-                value = formState.measuresText,
-                onValueChange = { viewModel.onMeasuresChange(it) },
-                label = { Text("Cantidades (separadas por coma)") },
-                placeholder = { Text("200g, 2, 250ml") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2
-            )
+            OutlinedTextField(value = formState.category, onValueChange = { viewModel.onCategoryChange(it) }, label = { Text("Categoría") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = formState.area, onValueChange = { viewModel.onAreaChange(it) }, label = { Text("Origen/Cocina") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            OutlinedTextField(value = formState.thumbnailUrl, onValueChange = { viewModel.onThumbnailUrlChange(it) }, label = { Text("URL de imagen (opcional)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            // Ingredientes y cantidades separados por coma, el ViewModel los convierte a lista
+            OutlinedTextField(value = formState.ingredientsText, onValueChange = { viewModel.onIngredientsChange(it) }, label = { Text("Ingredientes (separados por coma)") }, placeholder = { Text("harina, huevos, leche") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+            OutlinedTextField(value = formState.measuresText, onValueChange = { viewModel.onMeasuresChange(it) }, label = { Text("Cantidades (separadas por coma)") }, placeholder = { Text("200g, 2, 250ml") }, modifier = Modifier.fillMaxWidth(), minLines = 2)
+            // Campo obligatorio: instrucciones
             OutlinedTextField(
                 value = formState.instructions,
                 onValueChange = { viewModel.onInstructionsChange(it) },

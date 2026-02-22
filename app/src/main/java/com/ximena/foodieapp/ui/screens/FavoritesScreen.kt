@@ -23,6 +23,7 @@ fun FavoritesScreen(
     onBack: () -> Unit,
     viewModel: FavoritesViewModel = hiltViewModel()
 ) {
+    // Escucha la lista de favoritas en tiempo real desde Room
     val favorites by viewModel.favoriteRecipes.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -35,6 +36,7 @@ fun FavoritesScreen(
             )
         }
     ) { padding ->
+        // Pantalla vacía si no hay favoritas
         if (favorites.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -61,6 +63,7 @@ fun FavoritesScreen(
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
+                // key = id para que Compose reutilice los items correctamente al borrar
                 items(favorites, key = { it.id }) { recipe ->
                     RecipeDetailCard(
                         recipe = recipe,

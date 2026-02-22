@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// ViewModel de autenticación: gestiona el estado de sesión y los datos del usuario
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
@@ -24,15 +25,19 @@ class AuthViewModel @Inject constructor(
     private val getCachedUserInfoUseCase: GetCachedUserInfoUseCase
 ) : ViewModel() {
 
+    // true si hay sesión activa
     private val _isLoggedIn = MutableStateFlow(isLoggedInUseCase())
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
+    // Estado del proceso de login: Loading / Success / Error
     private val _loginState = MutableStateFlow<UiState<UserInfo>?>(null)
     val loginState: StateFlow<UiState<UserInfo>?> = _loginState.asStateFlow()
 
+    // Datos del usuario logueado
     private val _userInfo = MutableStateFlow<UserInfo?>(getCachedUserInfoUseCase())
     val userInfo: StateFlow<UserInfo?> = _userInfo.asStateFlow()
 
+    // Lanza el login con Auth0, actualiza el estado según el resultado
     fun login(activity: Activity) {
         viewModelScope.launch {
             _loginState.value = UiState.Loading
@@ -49,6 +54,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    // Cierra sesión y limpia todos los estados
     fun logout(activity: Activity) {
         viewModelScope.launch {
             logoutUseCase(activity)

@@ -19,6 +19,7 @@ import coil.compose.AsyncImage
 import com.ximena.foodieapp.domain.model.MealSummary
 import com.ximena.foodieapp.domain.model.Recipe
 
+// Tarjeta de receta resumida: foto + nombre. Se usa en listas y el grid de Home
 @Composable
 fun RecipeCard(meal: MealSummary, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
@@ -31,48 +32,36 @@ fun RecipeCard(meal: MealSummary, onClick: () -> Unit, modifier: Modifier = Modi
                 model = meal.thumbnailUrl,
                 contentDescription = meal.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             )
             Text(
                 text = meal.name,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+                overflow = TextOverflow.Ellipsis, // Si el nombre es muy largo pone "..."
                 modifier = Modifier.padding(8.dp)
             )
         }
     }
 }
 
+// Tarjeta de receta con más detalle: foto pequeña + nombre + categoría + botón favorito opcional
 @Composable
-fun RecipeDetailCard(
-    recipe: Recipe,
-    onClick: () -> Unit,
-    onFavoriteClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
+fun RecipeDetailCard(recipe: Recipe, onClick: () -> Unit, onFavoriteClick: (() -> Unit)? = null, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = recipe.thumbnailUrl,
-                contentDescription = recipe.name,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp))
-            )
+            AsyncImage(model = recipe.thumbnailUrl, contentDescription = recipe.name, contentScale = ContentScale.Crop, modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)))
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(recipe.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
-                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(recipe.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 Text(recipe.category, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
             }
+            // El corazón solo aparece si se pasa onFavoriteClick (en favoritos sí, en mis recetas no)
             if (onFavoriteClick != null) {
                 IconButton(onClick = onFavoriteClick) {
                     Icon(
@@ -86,6 +75,7 @@ fun RecipeDetailCard(
     }
 }
 
+// Pantalla de carga genérica: spinner centrado
 @Composable
 fun LoadingScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -93,13 +83,10 @@ fun LoadingScreen() {
     }
 }
 
+// Pantalla de error genérica: mensaje + botón opcional de reintentar
 @Composable
 fun ErrorScreen(message: String, onRetry: (() -> Unit)? = null) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text(text = "⚠️ $message", style = MaterialTheme.typography.bodyLarge)
         if (onRetry != null) {
             Spacer(modifier = Modifier.height(16.dp))
@@ -108,51 +95,25 @@ fun ErrorScreen(message: String, onRetry: (() -> Unit)? = null) {
     }
 }
 
+// Título de sección reutilizable (ej: "Categorías", "Ingredientes")
 @Composable
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        modifier = modifier.padding(vertical = 8.dp)
-    )
+    Text(text = text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = modifier.padding(vertical = 8.dp))
 }
 
+// Botón de acceso rápido con icono y texto, usado en el grid de Home
 @Composable
-fun QuickAccessCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun QuickAccessCard(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         onClick = onClick,
         modifier = modifier.height(72.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Start
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
+        Row(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
+            Icon(imageVector = icon, contentDescription = label, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            Text(text = label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
     }
 }

@@ -21,6 +21,7 @@ import com.ximena.foodieapp.domain.model.UiState
 import com.ximena.foodieapp.ui.components.ErrorScreen
 import com.ximena.foodieapp.ui.components.LoadingScreen
 import com.ximena.foodieapp.ui.components.SectionTitle
+
 import com.ximena.foodieapp.ui.viewmodel.RecipeDetailViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,8 +38,10 @@ fun RecipeDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showMealPlanDialog by remember { mutableStateOf(false) }
 
+    // Carga la receta cuando se abre la pantalla
     LaunchedEffect(mealId) { viewModel.loadRecipe(mealId) }
 
+    // Muestra el snackbar cuando llega un mensaje y lo limpia después
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let {
             snackbarHostState.showSnackbar(it)
@@ -51,11 +54,7 @@ fun RecipeDetailScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Detalle de receta") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Volver")
-                    }
-                }
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } }
             )
         }
     ) { padding ->
@@ -64,32 +63,19 @@ fun RecipeDetailScreen(
             is UiState.Error -> ErrorScreen(state.message, onRetry = { viewModel.loadRecipe(mealId) })
             is UiState.Success -> {
                 val recipe = state.data
-                LazyColumn(
-                    modifier = Modifier.padding(padding),
-                    contentPadding = PaddingValues(bottom = 32.dp)
-                ) {
+                LazyColumn(modifier = Modifier.padding(padding), contentPadding = PaddingValues(bottom = 32.dp)) {
+                    // Foto de cabecera a pantalla completa
                     item {
-                        AsyncImage(
-                            model = recipe.thumbnailUrl,
-                            contentDescription = recipe.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxWidth().height(250.dp)
-                        )
+                        AsyncImage(model = recipe.thumbnailUrl, contentDescription = recipe.name, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxWidth().height(250.dp))
                     }
                     item {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(recipe.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                                    Text(
-                                        "${recipe.category} · ${recipe.area}",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.secondary
-                                    )
+                                    Text("${recipe.category} · ${recipe.area}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
                                 }
+                                // Corazón relleno si es favorita, vacío si no
                                 IconButton(onClick = { viewModel.toggleFavorite() }) {
                                     Icon(
                                         imageVector = if (recipe.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -99,45 +85,33 @@ fun RecipeDetailScreen(
                                 }
                             }
 
+                            // Tags de la receta (ej: "Pasta", "Baked")
                             if (recipe.tags.isNotEmpty()) {
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.padding(top = 8.dp)
-                                ) {
+                                LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(top = 8.dp)) {
                                     items(recipe.tags) { tag ->
                                         AssistChip(onClick = {}, label = { Text(tag, style = MaterialTheme.typography.labelSmall) })
                                     }
                                 }
                             }
 
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                modifier = Modifier.padding(top = 16.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { viewModel.addToShoppingList(recipe); onAddToShopping() },
-                                    modifier = Modifier.weight(1f)
-                                ) {
+                            // Botones de acción: añadir a compras o planificar
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 16.dp)) {
+                                OutlinedButton(onClick = { viewModel.addToShoppingList(recipe); onAddToShopping() }, modifier = Modifier.weight(1f)) {
                                     Icon(Icons.Default.ShoppingCart, null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Compras")
                                 }
-                                Button(
-                                    onClick = { showMealPlanDialog = true },
-                                    modifier = Modifier.weight(1f)
-                                ) {
+                                Button(onClick = { showMealPlanDialog = true }, modifier = Modifier.weight(1f)) {
                                     Icon(Icons.Default.DateRange, null, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text("Planificar")
                                 }
                             }
 
+                            // Lista de ingredientes con sus cantidades
                             SectionTitle("Ingredientes (${recipe.ingredients.size})")
                             recipe.getIngredientsWithMeasures().forEach { (ingredient, measure) ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
+                                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text("• $ingredient", style = MaterialTheme.typography.bodyMedium)
                                     Text(measure, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                                 }
@@ -145,20 +119,14 @@ fun RecipeDetailScreen(
                             }
 
                             SectionTitle("Instrucciones")
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                            ) {
-                                Text(
-                                    text = recipe.instructions,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(12.dp)
-                                )
+                            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+                                Text(text = recipe.instructions, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(12.dp))
                             }
                         }
                     }
                 }
 
+                // Dialog para elegir día y tipo de comida al planificar
                 if (showMealPlanDialog) {
                     MealPlanDialog(
                         onDismiss = { showMealPlanDialog = false },
@@ -173,11 +141,9 @@ fun RecipeDetailScreen(
     }
 }
 
+// Dialog para seleccionar día y tipo de comida antes de añadir al plan
 @Composable
-fun MealPlanDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (DayOfWeek, MealType) -> Unit
-) {
+fun MealPlanDialog(onDismiss: () -> Unit, onConfirm: (DayOfWeek, MealType) -> Unit) {
     var selectedDay by remember { mutableStateOf(DayOfWeek.MONDAY) }
     var selectedMealType by remember { mutableStateOf(MealType.LUNCH) }
 
@@ -187,32 +153,21 @@ fun MealPlanDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Día:", fontWeight = FontWeight.SemiBold)
+                // Solo muestra las 3 primeras letras del día para que quepan
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     items(DayOfWeek.entries) { day ->
-                        FilterChip(
-                            selected = selectedDay == day,
-                            onClick = { selectedDay = day },
-                            label = { Text(day.displayName().take(3)) }
-                        )
+                        FilterChip(selected = selectedDay == day, onClick = { selectedDay = day }, label = { Text(day.displayName().take(3)) })
                     }
                 }
                 Text("Comida:", fontWeight = FontWeight.SemiBold)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     MealType.entries.forEach { type ->
-                        FilterChip(
-                            selected = selectedMealType == type,
-                            onClick = { selectedMealType = type },
-                            label = { Text(type.displayName()) }
-                        )
+                        FilterChip(selected = selectedMealType == type, onClick = { selectedMealType = type }, label = { Text(type.displayName()) })
                     }
                 }
             }
         },
-        confirmButton = {
-            Button(onClick = { onConfirm(selectedDay, selectedMealType) }) { Text("Añadir") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
-        }
+        confirmButton = { Button(onClick = { onConfirm(selectedDay, selectedMealType) }) { Text("Añadir") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
     )
 }

@@ -55,21 +55,19 @@ fun MealPlanScreen(
                 }
             }
         } else {
+            // Agrupa las entradas por día para mostrar una card por día
             val grouped = mealPlans.groupBy { it.dayOfWeek }
             LazyColumn(
                 modifier = Modifier.padding(padding),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Recorre los días en orden (lunes → domingo) y solo muestra los que tienen algo
                 DayOfWeek.entries.forEach { day ->
                     val dayMeals = grouped[day]
                     if (!dayMeals.isNullOrEmpty()) {
                         item(key = day.name) {
-                            DaySection(
-                                day = day,
-                                meals = dayMeals,
-                                onDelete = { viewModel.removeMealPlan(it) }
-                            )
+                            DaySection(day = day, meals = dayMeals, onDelete = { viewModel.removeMealPlan(it) })
                         }
                     }
                 }
@@ -78,6 +76,7 @@ fun MealPlanScreen(
     }
 }
 
+// Card de un día con todas sus comidas listadas
 @Composable
 fun DaySection(day: DayOfWeek, meals: List<MealPlan>, onDelete: (Int) -> Unit) {
     Card(
@@ -92,6 +91,7 @@ fun DaySection(day: DayOfWeek, meals: List<MealPlan>, onDelete: (Int) -> Unit) {
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
+            // Ordenado por tipo de comida: desayuno → comida → cena
             meals.sortedBy { it.mealType.ordinal }.forEach { meal ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -107,11 +107,7 @@ fun DaySection(day: DayOfWeek, meals: List<MealPlan>, onDelete: (Int) -> Unit) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = meal.recipeName, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
                     IconButton(onClick = { onDelete(meal.id) }, modifier = Modifier.size(36.dp)) {
-                        Icon(
-                            Icons.Default.Delete, "Eliminar",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(18.dp)
-                        )
+                        Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
                     }
                 }
                 if (meals.last() != meal) HorizontalDivider()

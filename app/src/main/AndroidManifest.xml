@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permiso para hacer llamadas a la API y Auth0 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -13,7 +14,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FoodieApp">
 
-        <!-- ✅ Auth0 callback handler -->
+        <!--
+            Activity de Auth0: maneja el callback del navegador después del login
+            El intent-filter captura la URL de redirección con el scheme y dominio de Auth0
+        -->
         <activity
             android:name="com.auth0.android.provider.AuthenticationActivity"
             android:exported="true"
@@ -22,12 +26,17 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <!-- auth0Scheme y auth0Domain vienen del build.gradle -->
                 <data
                     android:scheme="${auth0Scheme}"
                     android:host="${auth0Domain}" />
             </intent-filter>
         </activity>
 
+        <!--
+            Activity principal: launchMode singleTask evita que se abran múltiples instancias
+            cuando Auth0 redirige de vuelta a la app
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

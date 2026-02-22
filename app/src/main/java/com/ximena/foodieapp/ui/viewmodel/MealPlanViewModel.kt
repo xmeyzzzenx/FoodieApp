@@ -20,8 +20,10 @@ class MealPlanViewModel @Inject constructor(
     private val mealPlanRepository: MealPlanRepository
 ) : ViewModel() {
 
+    // Semana actual en formato "2024-W10" para filtrar el plan
     val currentWeek = mealPlanRepository.getCurrentWeekYear()
 
+    // Plan de la semana actual, se actualiza solo cuando cambia Room
     val mealPlans: StateFlow<List<MealPlan>> = getMealPlanUseCase(currentWeek)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

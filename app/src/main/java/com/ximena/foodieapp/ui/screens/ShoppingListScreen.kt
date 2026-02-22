@@ -25,6 +25,7 @@ fun ShoppingListScreen(
     val items by viewModel.shoppingItems.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
 
+    // Separa la lista en pendientes y ya marcados
     val pending = items.filter { !it.isChecked }
     val checked = items.filter { it.isChecked }
 
@@ -32,10 +33,9 @@ fun ShoppingListScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Lista de compras 🛒", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") }
-                },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver") } },
                 actions = {
+                    // Solo muestra el botón de borrar si hay items marcados
                     if (checked.isNotEmpty()) {
                         IconButton(onClick = { viewModel.clearChecked() }) {
                             Icon(Icons.Default.Delete, "Limpiar marcados")
@@ -60,50 +60,19 @@ fun ShoppingListScreen(
                 }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            LazyColumn(modifier = Modifier.padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Sección de pendientes
                 if (pending.isNotEmpty()) {
-                    item {
-                        Text(
-                            "Pendiente (${pending.size})",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                    }
+                    item { Text("Pendiente (${pending.size})", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(vertical = 4.dp)) }
                     items(pending, key = { it.id }) { item ->
-                        ShoppingItemRow(
-                            name = item.name,
-                            measure = item.measure,
-                            isChecked = false,
-                            recipeName = item.recipeName,
-                            onToggle = { viewModel.toggleItem(item.id, true) },
-                            onDelete = { viewModel.deleteItem(item) }
-                        )
+                        ShoppingItemRow(name = item.name, measure = item.measure, isChecked = false, recipeName = item.recipeName, onToggle = { viewModel.toggleItem(item.id, true) }, onDelete = { viewModel.deleteItem(item) })
                     }
                 }
+                // Sección de completados (aparecen tachados)
                 if (checked.isNotEmpty()) {
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Completado (${checked.size})",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                    }
+                    item { Spacer(modifier = Modifier.height(8.dp)); Text("Completado (${checked.size})", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(vertical = 4.dp)) }
                     items(checked, key = { it.id }) { item ->
-                        ShoppingItemRow(
-                            name = item.name,
-                            measure = item.measure,
-                            isChecked = true,
-                            recipeName = item.recipeName,
-                            onToggle = { viewModel.toggleItem(item.id, false) },
-                            onDelete = { viewModel.deleteItem(item) }
-                        )
+                        ShoppingItemRow(name = item.name, measure = item.measure, isChecked = true, recipeName = item.recipeName, onToggle = { viewModel.toggleItem(item.id, false) }, onDelete = { viewModel.deleteItem(item) })
                     }
                 }
             }
@@ -111,53 +80,38 @@ fun ShoppingListScreen(
     }
 
     if (showAddDialog) {
-        AddShoppingItemDialog(
-            onDismiss = { showAddDialog = false },
-            onAdd = { name, measure -> viewModel.addItem(name, measure); showAddDialog = false }
-        )
+        AddShoppingItemDialog(onDismiss = { showAddDialog = false }, onAdd = { name, measure -> viewModel.addItem(name, measure); showAddDialog = false })
     }
 }
 
+// Fila de un item: checkbox, nombre, cantidad y botón de borrar
 @Composable
-fun ShoppingItemRow(
-    name: String,
-    measure: String,
-    isChecked: Boolean,
-    recipeName: String?,
-    onToggle: () -> Unit,
-    onDelete: () -> Unit
-) {
+fun ShoppingItemRow(name: String, measure: String, isChecked: Boolean, recipeName: String?, onToggle: () -> Unit, onDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isChecked)
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-            else MaterialTheme.colorScheme.surface
-        )
+        // Fondo más apagado si ya está marcado
+        colors = CardDefaults.cardColors(containerColor = if (isChecked) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = isChecked, onCheckedChange = { onToggle() })
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "$name${if (measure.isNotBlank()) " - $measure" else ""}",
                     style = MaterialTheme.typography.bodyMedium,
+                    // Tachado si está marcado como comprado
                     textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
                 )
-                recipeName?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
-                }
+                // Nombre de la receta de donde viene (si lo tiene)
+                recipeName?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary) }
             }
             IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Default.Close, "Eliminar", modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                Icon(Icons.Default.Close, "Eliminar", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
             }
         }
     }
 }
 
+// Dialog para añadir un item a mano (nombre obligatorio, cantidad opcional)
 @Composable
 fun AddShoppingItemDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
@@ -178,13 +132,7 @@ fun AddShoppingItemDialog(onDismiss: () -> Unit, onAdd: (String, String) -> Unit
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = measure,
-                    onValueChange = { measure = it },
-                    label = { Text("Cantidad (opcional)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                OutlinedTextField(value = measure, onValueChange = { measure = it }, label = { Text("Cantidad (opcional)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
             }
         },
         confirmButton = {

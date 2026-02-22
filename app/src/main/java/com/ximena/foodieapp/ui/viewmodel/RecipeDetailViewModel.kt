@@ -32,9 +32,11 @@ class RecipeDetailViewModel @Inject constructor(
     private val _recipeState = MutableStateFlow<UiState<Recipe>>(UiState.Loading)
     val recipeState: StateFlow<UiState<Recipe>> = _recipeState.asStateFlow()
 
+    // Mensaje puntual para mostrar en Snackbar (se limpia después de mostrarlo)
     private val _snackbarMessage = MutableStateFlow<String?>(null)
     val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
 
+    // Carga la receta: primero busca en local, si no la pide a la API
     fun loadRecipe(id: String) {
         viewModelScope.launch {
             _recipeState.value = UiState.Loading
@@ -52,6 +54,7 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
+    // Cambia el estado de favorito y actualiza la UI sin relanzar la petición
     fun toggleFavorite() {
         val current = (_recipeState.value as? UiState.Success)?.data ?: return
         viewModelScope.launch {
@@ -61,6 +64,7 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
+    // Convierte los ingredientes de la receta en items de la lista de la compra
     fun addToShoppingList(recipe: Recipe) {
         viewModelScope.launch {
             val items = recipe.getIngredientsWithMeasures().map { (ingredient, measure) ->
@@ -71,6 +75,7 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
+    // Añade la receta al planificador en el día y tipo de comida indicados
     fun addToMealPlan(recipe: Recipe, day: DayOfWeek, mealType: MealType) {
         viewModelScope.launch {
             addMealPlanUseCase(
@@ -87,5 +92,6 @@ class RecipeDetailViewModel @Inject constructor(
         }
     }
 
+    // La pantalla llama a esto después de mostrar el Snackbar para no repetirlo
     fun clearSnackbar() { _snackbarMessage.value = null }
 }

@@ -69,7 +69,7 @@ fun HomeScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Bienvenida
+            // Saludo con nombre del usuario de Auth0
             item {
                 Text(
                     text = "¡Hola, ${userInfo?.name ?: "Chef"}! 👋",
@@ -85,46 +85,21 @@ fun HomeScreen(
                 }
             }
 
-// Acceso rápido
+            // Botones rápidos a las secciones principales
             item {
                 SectionTitle("Acceso rápido")
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    QuickAccessCard(
-                        icon = Icons.Default.Favorite,
-                        label = "Favoritas",
-                        onClick = onNavigateToFavorites,
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuickAccessCard(
-                        icon = Icons.Default.DateRange,
-                        label = "Plan Semanal",
-                        onClick = onNavigateToMealPlan,
-                        modifier = Modifier.weight(1f)
-                    )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickAccessCard(icon = Icons.Default.Favorite, label = "Favoritas", onClick = onNavigateToFavorites, modifier = Modifier.weight(1f))
+                    QuickAccessCard(icon = Icons.Default.DateRange, label = "Plan Semanal", onClick = onNavigateToMealPlan, modifier = Modifier.weight(1f))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    QuickAccessCard(
-                        icon = Icons.Default.ShoppingCart,
-                        label = "Compras",
-                        onClick = onNavigateToShopping,
-                        modifier = Modifier.weight(1f)
-                    )
-                    QuickAccessCard(
-                        icon = Icons.Default.Person,
-                        label = "Mis Recetas",
-                        onClick = onNavigateToMyRecipes,
-                        modifier = Modifier.weight(1f)
-                    )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    QuickAccessCard(icon = Icons.Default.ShoppingCart, label = "Compras", onClick = onNavigateToShopping, modifier = Modifier.weight(1f))
+                    QuickAccessCard(icon = Icons.Default.Person, label = "Mis Recetas", onClick = onNavigateToMyRecipes, modifier = Modifier.weight(1f))
                 }
             }
-            // Receta del día
+
+            // Receta aleatoria del día con botón para cambiarla
             item {
                 SectionTitle("Receta del día 🎲")
                 when (val state = randomMealState) {
@@ -134,23 +109,15 @@ fun HomeScreen(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                         ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                AsyncImage(
-                                    model = meal.thumbnailUrl,
-                                    contentDescription = meal.name,
-                                    modifier = Modifier.size(80.dp)
-                                )
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                AsyncImage(model = meal.thumbnailUrl, contentDescription = meal.name, modifier = Modifier.size(80.dp))
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(meal.name, fontWeight = FontWeight.Bold)
                                     Text(meal.category, style = MaterialTheme.typography.bodySmall)
-                                    TextButton(onClick = { onRecipeClick(meal.id) }) {
-                                        Text("Ver receta →")
-                                    }
+                                    TextButton(onClick = { onRecipeClick(meal.id) }) { Text("Ver receta →") }
                                 }
+                                // Refresca la receta del día
                                 IconButton(onClick = { viewModel.refreshRandom() }) {
                                     Icon(Icons.Default.Refresh, "Nueva sugerencia")
                                 }
@@ -162,7 +129,7 @@ fun HomeScreen(
                 }
             }
 
-            // Categorías
+            // Chips de categorías: al pulsar filtra las recetas de abajo
             item {
                 SectionTitle("Categorías")
                 when (val state = categoriesState) {
@@ -182,7 +149,8 @@ fun HomeScreen(
                 }
             }
 
-            // Grid de recetas en 2 columnas
+            // Recetas de la categoría seleccionada en grid de 2 columnas
+            // chunked(2) parte la lista en grupos de 2 para hacer las filas a mano
             item {
                 when (val state = mealsState) {
                     is UiState.Loading -> CircularProgressIndicator()
@@ -190,17 +158,11 @@ fun HomeScreen(
                     is UiState.Success -> {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             state.data.chunked(2).forEach { rowMeals ->
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                                     rowMeals.forEach { meal ->
-                                        RecipeCard(
-                                            meal = meal,
-                                            onClick = { onRecipeClick(meal.id) },
-                                            modifier = Modifier.weight(1f)
-                                        )
+                                        RecipeCard(meal = meal, onClick = { onRecipeClick(meal.id) }, modifier = Modifier.weight(1f))
                                     }
+                                    // Si la fila tiene solo 1 receta, rellena el espacio vacío
                                     if (rowMeals.size == 1) Spacer(modifier = Modifier.weight(1f))
                                 }
                             }

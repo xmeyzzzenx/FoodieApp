@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
+// Repositorio de recetas: decide si los datos vienen de la API o de Room
 @Singleton
 class RecipeRepository @Inject constructor(
     private val apiService: MealDbApiService,
@@ -32,6 +33,7 @@ class RecipeRepository @Inject constructor(
     fun searchLocalRecipes(query: String): Flow<List<Recipe>> =
         recipeDao.searchRecipes(userId, query).map { it.map { e -> e.toRecipe() } }
 
+    // runCatching = envuelve en try-catch y devuelve Result.success o Result.failure
     suspend fun searchMealsByName(name: String): Result<List<MealSummary>> = runCatching {
         apiService.searchMealsByName(name).meals?.map { it.toMealSummary() } ?: emptyList()
     }
@@ -44,6 +46,7 @@ class RecipeRepository @Inject constructor(
         apiService.getCategories().categories?.map { it.toCategory() } ?: emptyList()
     }
 
+    // Primero busca en local, si no está la pide a la API y la cachea en Room
     suspend fun getRecipeDetail(id: String): Result<Recipe> = runCatching {
         val local = recipeDao.getRecipeById(userId, id)
         if (local != null) return Result.success(local.toRecipe())
@@ -59,6 +62,7 @@ class RecipeRepository @Inject constructor(
         meal.toRecipe()
     }
 
+    // Si ya existe en local, cambia el favorito. Si no, la guarda como favorita
     suspend fun toggleFavorite(recipe: Recipe) {
         val existing = recipeDao.getRecipeById(userId, recipe.id)
         if (existing != null) {
@@ -72,6 +76,7 @@ class RecipeRepository @Inject constructor(
         recipeDao.insertRecipe(recipe.copy(isUserCreated = true).toEntity(userId))
     }
 
+    // Busca primero en local para tener el objeto Entity que necesita el DAO para borrar
     suspend fun deleteUserRecipe(recipe: Recipe) {
         recipeDao.getRecipeById(userId, recipe.id)?.let { recipeDao.deleteRecipe(it) }
     }

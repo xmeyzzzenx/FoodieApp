@@ -8,12 +8,14 @@ import com.ximena.foodieapp.domain.model.Category
 import com.ximena.foodieapp.domain.model.MealSummary
 import com.ximena.foodieapp.domain.model.Recipe
 
+// DTO (API) → Model resumido para listas
 fun MealDto.toMealSummary() = MealSummary(
     id = idMeal,
     name = strMeal,
     thumbnailUrl = strMealThumb
 )
 
+// DTO (API) → Model de categoría
 fun CategoryDto.toCategory() = Category(
     id = idCategory,
     name = strCategory,
@@ -21,6 +23,7 @@ fun CategoryDto.toCategory() = Category(
     description = strCategoryDescription
 )
 
+// DTO (API) → Model completo de receta
 fun MealDetailDto.toRecipe(isFavorite: Boolean = false): Recipe {
     val ingredients = getIngredientsList()
     val measures = getMeasuresList()
@@ -31,6 +34,7 @@ fun MealDetailDto.toRecipe(isFavorite: Boolean = false): Recipe {
         area = strArea,
         instructions = strInstructions,
         thumbnailUrl = strMealThumb,
+        // Las tags vienen como "Pasta,Baked" → se separan en lista y se limpian
         tags = strTags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList(),
         youtubeUrl = strYoutube,
         ingredients = ingredients,
@@ -39,6 +43,8 @@ fun MealDetailDto.toRecipe(isFavorite: Boolean = false): Recipe {
     )
 }
 
+// DTO (API) → Entity de Room (para cachear la receta localmente)
+// Los ingredientes se guardan como "harina||azúcar||huevo" separados por ||
 fun MealDetailDto.toRecipeEntity(userId: String, isFavorite: Boolean = false): RecipeEntity {
     val ingredients = getIngredientsList()
     val measures = getMeasuresList()
@@ -58,6 +64,8 @@ fun MealDetailDto.toRecipeEntity(userId: String, isFavorite: Boolean = false): R
     )
 }
 
+// Entity (Room) → Model (para mostrar en UI)
+// Se divide el string "harina||azúcar" de vuelta a lista
 fun RecipeEntity.toRecipe() = Recipe(
     id = id,
     name = name,
@@ -73,6 +81,7 @@ fun RecipeEntity.toRecipe() = Recipe(
     isUserCreated = isUserCreated
 )
 
+// Model → Entity (para guardar recetas creadas por el usuario)
 fun Recipe.toEntity(userId: String) = RecipeEntity(
     id = id,
     userId = userId,

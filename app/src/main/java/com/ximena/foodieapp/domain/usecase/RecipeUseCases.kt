@@ -7,6 +7,8 @@ import com.ximena.foodieapp.domain.model.Recipe
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
+// Casos de uso de recetas: cada clase delega en el repositorio
+
 class GetCategoriesUseCase @Inject constructor(
     private val repository: RecipeRepository
 ) {
@@ -26,6 +28,7 @@ class GetRandomMealUseCase @Inject constructor(
     suspend operator fun invoke(): Result<Recipe> = repository.getRandomMeal()
 }
 
+// Primero busca en local, si no está la pide a la API (lógica en el repositorio)
 class GetRecipeDetailUseCase @Inject constructor(
     private val repository: RecipeRepository
 ) {
@@ -39,12 +42,14 @@ class SearchMealsUseCase @Inject constructor(
         repository.searchMealsByName(query)
 }
 
+// Si ya es favorita la quita, si no lo es la añade (toggle)
 class ToggleFavoriteUseCase @Inject constructor(
     private val repository: RecipeRepository
 ) {
     suspend operator fun invoke(recipe: Recipe) = repository.toggleFavorite(recipe)
 }
 
+// Flow = la lista se actualiza sola cuando cambia algo en Room
 class GetFavoriteRecipesUseCase @Inject constructor(
     private val repository: RecipeRepository
 ) {

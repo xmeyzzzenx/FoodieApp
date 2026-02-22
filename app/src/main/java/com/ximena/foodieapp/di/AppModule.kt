@@ -19,21 +19,25 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
+// Módulo de Hilt: aquí se configuran todas las dependencias de la app
+// Hilt las inyecta automáticamente donde se necesiten (en repositorios, ViewModels, etc.)
 @Module
-@InstallIn(SingletonComponent::class)
+@InstallIn(SingletonComponent::class) // Estas instancias viven mientras vive la app
 object AppModule {
 
+    // Cliente HTTP con logs para ver en Logcat las peticiones y respuestas
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.BODY // Muestra la URL, headers y body completo
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
             .build()
     }
 
+    // Instancia de Retrofit apuntando a TheMealDB, usando Gson para parsear el JSON
     @Provides
     @Singleton
     fun provideMealDbApiService(okHttpClient: OkHttpClient): MealDbApiService =
@@ -44,6 +48,7 @@ object AppModule {
             .build()
             .create(MealDbApiService::class.java)
 
+    // Base de datos Room. fallbackToDestructiveMigration = si sube la versión, borra y recrea
     @Provides
     @Singleton
     fun provideFoodieDatabase(@ApplicationContext context: Context): FoodieDatabase =
@@ -51,6 +56,7 @@ object AppModule {
             .fallbackToDestructiveMigration()
             .build()
 
+    // DAOs obtenidos desde la BD (no son Singleton porque Room los gestiona él solo)
     @Provides
     fun provideRecipeDao(db: FoodieDatabase): RecipeDao = db.recipeDao()
 
@@ -60,6 +66,7 @@ object AppModule {
     @Provides
     fun provideShoppingItemDao(db: FoodieDatabase): ShoppingItemDao = db.shoppingItemDao()
 
+    // Instancia de Auth0 con el clientId y dominio del proyecto
     @Provides
     @Singleton
     fun provideAuth0(): Auth0 =

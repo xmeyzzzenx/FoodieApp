@@ -15,28 +15,33 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+// Repositorio de autenticación con Auth0
 @Singleton
 class AuthRepository @Inject constructor(
     private val auth0: Auth0
 ) {
+    // Credenciales y datos del usuario en memoria (se pierden al cerrar la app)
     private var cachedCredentials: Credentials? = null
     private var cachedUserInfo: UserInfo? = null
 
-    private val authScheme = "com.ximena.foodieapp"
+    private val authScheme = "com.ximena.foodieapp" // Scheme del redirect URI de Auth0
 
+    // Si hay credenciales en memoria = hay sesión activa
     fun isLoggedIn(): Boolean = cachedCredentials != null
 
     fun getCachedUserInfo(): UserInfo? = cachedUserInfo
 
-    // ✅ userId único por usuario Auth0 (sub del token)
+    // Devuelve el ID único del usuario (el "sub" del token de Auth0)
     fun getCurrentUserId(): String = cachedUserInfo?.userId ?: "anonymous"
 
+    // Abre el navegador para hacer login con Auth0
+    // suspendCancellableCoroutine convierte el callback de Auth0 a corrutina
     suspend fun login(activity: Activity): Result<UserInfo> {
         return try {
             val credentials = suspendCancellableCoroutine { continuation ->
                 WebAuthProvider.login(auth0)
                     .withScheme(authScheme)
-                    .withScope("openid profile email")
+                    .withScope("openid profile email") // Permisos que se piden al usuario
                     .start(activity, object : Callback<Credentials, AuthenticationException> {
                         override fun onSuccess(result: Credentials) {
                             if (continuation.isActive) continuation.resume(result)
@@ -48,6 +53,7 @@ class AuthRepository @Inject constructor(
             }
             cachedCredentials = credentials
             val accessToken = credentials.accessToken
+            // Con el token se piden los datos del perfil del usuario
             val userInfo = if (!accessToken.isNullOrBlank()) {
                 fetchUserProfile(accessToken)
             } else {
@@ -60,6 +66,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    // Abre el navegador para cerrar sesión en Auth0 y limpia la caché local
     suspend fun logout(activity: Activity): Result<Unit> {
         return try {
             suspendCancellableCoroutine { continuation ->
@@ -70,6 +77,7 @@ class AuthRepository @Inject constructor(
                             if (continuation.isActive) continuation.resume(Unit)
                         }
                         override fun onFailure(error: AuthenticationException) {
+                            // Aunque falle, se limpia la sesión local igualmente
                             if (continuation.isActive) continuation.resume(Unit)
                         }
                     })
@@ -84,6 +92,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
+    // Llama a la API de Auth0 para obtener nombre, email y foto del usuario
     private suspend fun fetchUserProfile(accessToken: String): UserInfo {
         return try {
             suspendCancellableCoroutine { continuation ->
@@ -100,6 +109,7 @@ class AuthRepository @Inject constructor(
                             if (continuation.isActive) continuation.resume(userInfo)
                         }
                         override fun onFailure(error: AuthenticationException) {
+                            // Si falla, se devuelve un usuario genérico con el token como ID
                             if (continuation.isActive) continuation.resume(
                                 UserInfo("Usuario", "", null, accessToken.take(20))
                             )

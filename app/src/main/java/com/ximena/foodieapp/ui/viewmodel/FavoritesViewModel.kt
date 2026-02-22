@@ -18,9 +18,12 @@ class FavoritesViewModel @Inject constructor(
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
 
+    // Lista de favoritas, se actualiza sola cuando cambia Room
+    // WhileSubscribed(5000) = para el Flow 5s después de que no haya observers (ahorra recursos)
     val favoriteRecipes: StateFlow<List<Recipe>> = getFavoriteRecipesUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Llama al toggle, si ya era favorita la quita
     fun removeFavorite(recipe: Recipe) {
         viewModelScope.launch { toggleFavoriteUseCase(recipe) }
     }

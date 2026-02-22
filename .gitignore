@@ -1,14 +1,26 @@
+# Archivos del Android Studio (configuración de mi ordenador)
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+.kotlin/
+
+# Archivos que se crean al compilar (no son código)
+.gradle/
+build/
+**/build/
+
+# Archivo con la ruta del SDK de mi PC (no se comparte)
+local.properties
+
+# Archivos que se generan automáticamente
+.externalNativeBuild/
+.cxx/
+captures/
+
+# Archivos del sistema
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+Thumbs.db
+
+# Logs y temporales
+*.log
+*.tmp
+*.bak
