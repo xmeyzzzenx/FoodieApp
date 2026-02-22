@@ -40,7 +40,14 @@ class RecipeDetailViewModel @Inject constructor(
             _recipeState.value = UiState.Loading
             getRecipeDetailUseCase(id).fold(
                 onSuccess = { _recipeState.value = UiState.Success(it) },
-                onFailure = { _recipeState.value = UiState.Error(it.message ?: "Error al cargar receta") }
+                onFailure = { error ->
+                    val mensaje = when {
+                        error is java.net.UnknownHostException -> "Sin conexión a internet. Comprueba tu red."
+                        error is java.io.IOException -> "Error de red. Inténtalo de nuevo."
+                        else -> "Error al cargar la receta. Inténtalo de nuevo."
+                    }
+                    _recipeState.value = UiState.Error(mensaje)
+                }
             )
         }
     }

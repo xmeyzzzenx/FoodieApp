@@ -36,7 +36,14 @@ class SearchViewModel @Inject constructor(
             _searchResults.value = UiState.Loading
             searchMealsUseCase(query).fold(
                 onSuccess = { _searchResults.value = UiState.Success(it) },
-                onFailure = { _searchResults.value = UiState.Error(it.message ?: "Error") }
+                onFailure = { error ->
+                    val mensaje = when {
+                        error is java.net.UnknownHostException -> "Sin conexión a internet. Comprueba tu red."
+                        error is java.io.IOException -> "Error de red. Inténtalo de nuevo."
+                        else -> "Error al buscar recetas. Inténtalo de nuevo."
+                    }
+                    _searchResults.value = UiState.Error(mensaje)
+                }
             )
         }
     }

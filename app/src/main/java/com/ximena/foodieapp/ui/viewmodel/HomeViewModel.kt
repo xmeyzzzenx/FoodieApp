@@ -14,6 +14,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.UnknownHostException
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,6 +42,12 @@ class HomeViewModel @Inject constructor(
         loadRandomMeal()
     }
 
+    private fun errorMessage(error: Throwable, contexto: String): String = when (error) {
+        is UnknownHostException -> "Sin conexión a internet. Comprueba tu red."
+        is IOException -> "Error de red. Inténtalo de nuevo."
+        else -> "Error al cargar $contexto. Inténtalo de nuevo."
+    }
+
     private fun loadCategories() {
         viewModelScope.launch {
             _categoriesState.value = UiState.Loading
@@ -48,7 +56,9 @@ class HomeViewModel @Inject constructor(
                     _categoriesState.value = UiState.Success(categories)
                     categories.firstOrNull()?.let { selectCategory(it.name) }
                 },
-                onFailure = { _categoriesState.value = UiState.Error(it.message ?: "Error") }
+                onFailure = {
+                    _categoriesState.value = UiState.Error(errorMessage(it, "las categorías"))
+                }
             )
         }
     }
@@ -59,7 +69,9 @@ class HomeViewModel @Inject constructor(
             _mealsState.value = UiState.Loading
             getMealsByCategoryUseCase(category).fold(
                 onSuccess = { _mealsState.value = UiState.Success(it) },
-                onFailure = { _mealsState.value = UiState.Error(it.message ?: "Error") }
+                onFailure = {
+                    _mealsState.value = UiState.Error(errorMessage(it, "las recetas"))
+                }
             )
         }
     }
@@ -78,7 +90,9 @@ class HomeViewModel @Inject constructor(
             _randomMealState.value = UiState.Loading
             getRandomMealUseCase().fold(
                 onSuccess = { _randomMealState.value = UiState.Success(it) },
-                onFailure = { _randomMealState.value = UiState.Error(it.message ?: "Error") }
+                onFailure = {
+                    _randomMealState.value = UiState.Error(errorMessage(it, "la receta del día"))
+                }
             )
         }
     }
