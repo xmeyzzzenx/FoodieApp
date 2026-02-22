@@ -119,7 +119,7 @@ Implementación con **Auth0**:
 ## ⚙️ Instalación
 
 1.  Clonar repositorio git clone
-    https://github.com/tu-usuario/FoodieApp.git
+    https://github.com/xmeyzzzenx/FoodieApp.git
 
 2.  Abrir en Android Studio
 
