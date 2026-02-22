@@ -85,25 +85,45 @@ fun HomeScreen(
                 }
             }
 
-            // Acceso rápido
+// Acceso rápido
             item {
                 SectionTitle("Acceso rápido")
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(
-                        listOf(
-                            "❤️ Favoritas" to onNavigateToFavorites,
-                            "📅 Plan" to onNavigateToMealPlan,
-                            "🛒 Compras" to onNavigateToShopping,
-                            "👨‍🍳 Mis Recetas" to onNavigateToMyRecipes
-                        )
-                    ) { (label, action) ->
-                        OutlinedButton(onClick = action) {
-                            Text(label, style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    QuickAccessCard(
+                        icon = Icons.Default.Favorite,
+                        label = "Favoritas",
+                        onClick = onNavigateToFavorites,
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickAccessCard(
+                        icon = Icons.Default.DateRange,
+                        label = "Plan Semanal",
+                        onClick = onNavigateToMealPlan,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    QuickAccessCard(
+                        icon = Icons.Default.ShoppingCart,
+                        label = "Compras",
+                        onClick = onNavigateToShopping,
+                        modifier = Modifier.weight(1f)
+                    )
+                    QuickAccessCard(
+                        icon = Icons.Default.Person,
+                        label = "Mis Recetas",
+                        onClick = onNavigateToMyRecipes,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
-
             // Receta del día
             item {
                 SectionTitle("Receta del día 🎲")
